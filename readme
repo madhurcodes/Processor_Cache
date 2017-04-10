@@ -1,0 +1,4 @@
+Assumptions:
+
+Numbers are stored as big endian in Memory.
+User can enter exit to print the result file at any time.
