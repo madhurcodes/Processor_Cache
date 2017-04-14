@@ -27,6 +27,9 @@
 #define CACHE_PARAM_WRITEALLOC 7
 #define CACHE_PARAM_NOWRITEALLOC 8
 
+#define DATA_STORE 1
+#define DATA_LOAD 0
+#define INSTR_LOAD 2
 
 /* structure definitions */
 typedef struct cache_line_ {
