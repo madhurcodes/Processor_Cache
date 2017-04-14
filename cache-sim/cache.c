@@ -13,7 +13,7 @@
 /* cache configuration parameters */
 static int cache_split = 0;
 static int cache_usize = DEFAULT_CACHE_SIZE;
-static int cache_isize = DEFAULT_CACHE_SIZE; 
+static int cache_isize = DEFAULT_CACHE_SIZE;
 static int cache_dsize = DEFAULT_CACHE_SIZE;
 static int cache_block_size = DEFAULT_CACHE_BLOCK_SIZE;
 static int words_per_block = DEFAULT_CACHE_BLOCK_SIZE / WORD_SIZE;
@@ -84,29 +84,29 @@ void init_cache()
 		c1.size = cache_isize/4;
 		c1.associativity = cache_assoc;
 		c1.index_mask_offset = LOG2(cache_block_size);
-		c1.n_sets = (cache_isize*cache_assoc)/cache_block_size;
+		c1.n_sets = cache_isize/(cache_assoc*cache_block_size);
 		c1.index_mask = (c1.n_sets-1) << LOG2(cache_block_size);
-		
-		c1.LRU_head = (Pcache_line *) malloc (sizeof(Pcache_line)*c1.n_sets); 
-		c1.LRU_tail = (Pcache_line *) malloc (sizeof(Pcache_line)*c1.n_sets); 
-		c1.set_contents = (int *) malloc( sizeof(int) * c1.n_sets);
-		
+
+		c1.LRU_head = (Pcache_line *) calloc(1,sizeof(Pcache_line)*c1.n_sets);
+		c1.LRU_tail = (Pcache_line *) calloc(1,sizeof(Pcache_line)*c1.n_sets);
+		c1.set_contents = (int *) calloc(1, sizeof(int) * c1.n_sets);
+
 		for (i=0;i<c1.n_sets;i++){
 			c1.LRU_head[i] = NULL;
 			c1.LRU_tail[i] = NULL;
 			c1.set_contents[i] = 0;
 		}
-		
+
 		c2.size = cache_dsize/4;
 		c2.associativity = cache_assoc;
 		c2.index_mask_offset = LOG2(cache_block_size);
-		c2.n_sets = (cache_dsize*cache_assoc)/cache_block_size;
+		c2.n_sets = cache_dsize/(cache_assoc*cache_block_size);
 		c2.index_mask = (c2.n_sets-1) << LOG2(cache_block_size);
-		
-		c2.LRU_head = (Pcache_line *) malloc (sizeof(Pcache_line)*c2.n_sets); 
-		c2.LRU_tail = (Pcache_line *) malloc (sizeof(Pcache_line)*c2.n_sets); 
-		c2.set_contents = (int *) malloc( sizeof(int) * c2.n_sets);
-		
+
+		c2.LRU_head = (Pcache_line *) calloc(1,sizeof(Pcache_line)*c2.n_sets);
+		c2.LRU_tail = (Pcache_line *) calloc(1,sizeof(Pcache_line)*c2.n_sets);
+		c2.set_contents = (int *) calloc(1, sizeof(int) * c2.n_sets);
+
 		for (i=0;i<c2.n_sets;i++){
 			c2.LRU_head[i] = NULL;
 			c2.LRU_tail[i] = NULL;
@@ -114,26 +114,26 @@ void init_cache()
 		}
 	}
 	else{
-		
+
 		c1.size = cache_usize/4;
 		c1.associativity = cache_assoc;
 		c1.index_mask_offset = LOG2(cache_block_size);
-		c1.n_sets = (cache_usize*cache_assoc)/cache_block_size;
+		c1.n_sets = cache_usize/(cache_assoc*cache_block_size);
 		c1.index_mask = (c1.n_sets-1) << LOG2(cache_block_size);
 
-		c1.LRU_head = (Pcache_line *) malloc (sizeof(Pcache_line)*c1.n_sets);  //maybe * after Pcache_line
-		c1.LRU_tail = (Pcache_line *) malloc (sizeof(Pcache_line)*c1.n_sets); 
-		c1.set_contents = (int *) malloc( sizeof(int) * c1.n_sets);
-		
+		c1.LRU_head = (Pcache_line *) calloc(1,sizeof(Pcache_line)*c1.n_sets);  //maybe * after Pcache_line
+		c1.LRU_tail = (Pcache_line *) calloc(1,sizeof(Pcache_line)*c1.n_sets);
+		c1.set_contents = (int *) calloc(1, sizeof(int) * c1.n_sets);
+
 		for (i=0;i<c1.n_sets;i++){
 			c1.LRU_head[i] = NULL;
 			c1.LRU_tail[i] = NULL;
 			c1.set_contents[i] = 0;
 		}
-		
-		
+
+
 	}
-	
+
 }
 /************************************************************/
 
@@ -144,34 +144,31 @@ unsigned addr, access_type;
 
 	/* handle an access to the cache */
 	cache* to_access;
-	unsigned int ind;
-	unsigned int tag;
+
 	if(cache_split==1){
 		if(access_type == INSTR_LOAD ){
 			to_access = &c1;
 		}
 		else{
 			to_access = &c2;
-		}							
+		}
 	}
 	else{
 		to_access = &c1;
 	}
-	
-	ind = (addr & to_access->index_mask) >> to_access->index_mask_offset;
-	tag = addr >> (to_access->index_mask_offset + LOG2(to_access->n_sets));
-	
+	unsigned int ind = (addr & to_access->index_mask) >> to_access->index_mask_offset;
+	unsigned int tag = addr >> (to_access->index_mask_offset + LOG2(to_access->n_sets));
+
+
 	if(access_type == INSTR_LOAD ){
 		cache_stat_inst.accesses += 1;
 	}
 	else{
 		cache_stat_data.accesses += 1;
 	}
-	
-	//direct only
 	Pcache_line toInsert;
 	if(to_access->LRU_head[ind]== NULL){
-		
+
 		if(access_type == INSTR_LOAD ){
 			cache_stat_inst.misses += 1;
 			cache_stat_inst.demand_fetches += cache_block_size/4;
@@ -180,8 +177,8 @@ unsigned addr, access_type;
 			cache_stat_data.misses += 1;
 			cache_stat_data.demand_fetches += cache_block_size/4;
 		}
-		
-		toInsert = (Pcache_line) malloc(sizeof(cache_line));
+
+		toInsert = (Pcache_line) calloc(1,sizeof(cache_line));
 		toInsert->tag = tag;
 		if(access_type == DATA_STORE){
 			toInsert->dirty = 1;
@@ -189,42 +186,87 @@ unsigned addr, access_type;
 		else{
 			toInsert->dirty = 0;
 		}
-		to_access->LRU_head[ind] = toInsert;
-		to_access->LRU_tail[ind] = toInsert;
-	//	insert(to_access->LRU_head[ind],to_access->LRU_tail[ind],toInsert);
+		to_access->set_contents[ind] = 1;
+		insert(&(to_access->LRU_head[ind]),&(to_access->LRU_tail[ind]),toInsert);
 	}
-	else if (to_access->LRU_head[ind]->tag == tag){
-		// got accessed
-	}
+	//else if (to_access->LRU_head[ind]->tag == tag){
+	// got accessed
+	//}
 	else{
-		//write back 
-		if(access_type == INSTR_LOAD ){
-			cache_stat_inst.copies_back += cache_block_size/4;
-			cache_stat_inst.misses += 1;
-			cache_stat_inst.replacements += 1;
-			cache_stat_inst.demand_fetches += cache_block_size/4;
+		//write back
+		Pcache_line c_line;
+		int found_flag = 0;
+		for(c_line = to_access->LRU_head[ind]; c_line != to_access->LRU_tail[ind]->LRU_next; c_line = c_line->LRU_next) {
+			if(c_line->tag == tag) {
+				found_flag = 1;
+				break;
+			}
 		}
+		if(found_flag == 0){
+			toInsert = (Pcache_line) calloc(1,sizeof(cache_line));
+			toInsert->tag = tag;
+			if(access_type == DATA_STORE){
+				toInsert->dirty = 1;
+			}
+			else{
+				toInsert->dirty = 0;
+			}
+			toInsert->LRU_next = NULL;
+			toInsert->LRU_prev = NULL;
+			if(access_type == INSTR_LOAD ){
+				cache_stat_inst.copies_back += cache_block_size/4;
+				cache_stat_inst.misses += 1;
+				cache_stat_inst.demand_fetches += cache_block_size/4;
+			}
+			else{
+				cache_stat_data.copies_back += cache_block_size/4;
+				cache_stat_data.misses += 1;
+				cache_stat_data.demand_fetches += cache_block_size/4;
+			}
+
+			if(to_access->set_contents[ind]<to_access->associativity){
+				insert(&(to_access->LRU_head[ind]),&(to_access->LRU_tail[ind]),toInsert);
+				to_access->set_contents[ind] += 1;
+			}
+			else{
+
+				if(access_type == INSTR_LOAD ){
+					cache_stat_inst.replacements += 1;
+				}
+				else{
+					cache_stat_data.replacements += 1;
+				}
+				delete(&(to_access->LRU_head[ind]),&(to_access->LRU_tail[ind]),to_access->LRU_tail[ind]);
+				insert(&(to_access->LRU_head[ind]),&(to_access->LRU_tail[ind]),toInsert);
+				to_access->set_contents[ind] += 1;
+			}
+		}
+
 		else{
-			cache_stat_data.copies_back += cache_block_size/4;
-			cache_stat_data.misses += 1;
-			cache_stat_data.demand_fetches += cache_block_size/4;
-			cache_stat_data.replacements += 1;
+			//Found It
+			// printf("\n--------------CD-------------------\n");
+			// dump_cache();
+			Pcache_line current_line = c_line;
+			delete(&(to_access->LRU_head[ind]),&(to_access->LRU_tail[ind]),c_line);
+			//free(c_line);
+			// printf("\n--------------DELED-------------------\n");
+			// dump_cache();
+			//			if(to_access->LRU_head[ind] == NULL){
+			//				to_access->LRU_head[ind] = current_line;
+			//				to_access->LRU_tail[ind] = current_line;
+			//			}
+			//			else{
+			insert(&(to_access->LRU_head[ind]),&(to_access->LRU_tail[ind]),current_line);
+			//	}
+			if(access_type == DATA_STORE){
+				current_line->dirty = 1;
+			}
+			// printf("\n--------------INSED-------------------\n");
+			// dump_cache();
 		}
-		
-		delete(to_access->LRU_head[ind],to_access->LRU_tail[ind],to_access->LRU_head[ind]);
-		toInsert = (Pcache_line) malloc(sizeof(cache_line));
-		toInsert->tag = tag;
-		if(access_type == DATA_STORE){
-			toInsert->dirty = 1;
-		}
-		else{
-			toInsert->dirty = 0;
-		}
-		to_access->LRU_head[ind] = toInsert;
-		to_access->LRU_tail[ind] = toInsert;
-		//insert(to_access->LRU_head[ind],to_access->LRU_tail[ind],toInsert);
+
 	}
-	
+
 }
 /************************************************************/
 
@@ -233,7 +275,7 @@ void flush()
 {
 	/* flush the cache */
 	int i;
-	dump_cache();
+	//dump_cache();
 	for(i = 0; i < c1.n_sets; i++) {
 		Pcache_line c_line;
 		if(c1.LRU_head[i] != NULL) {
@@ -244,7 +286,7 @@ void flush()
 			}
 		}
 	}
-	
+
 	for(i = 0; i < c2.n_sets; i++) {
 		Pcache_line c_line;
 		if(c2.LRU_head[i] != NULL) {
@@ -255,6 +297,7 @@ void flush()
 			}
 		}
 	}
+
 
 }
 /************************************************************/
@@ -312,7 +355,7 @@ void dump_settings()
 	}
 	printf("  Associativity: \t%d\n", cache_assoc);
 	printf("  Block size: \t%d\n", cache_block_size);
-	printf("  Write policy: \t%s\n", 
+	printf("  Write policy: \t%s\n",
 	cache_writeback ? "WRITE BACK" : "WRITE THROUGH");
 	printf("  Allocation policy: \t%s\n",
 	cache_writealloc ? "WRITE ALLOCATE" : "WRITE NO ALLOCATE");
@@ -328,9 +371,9 @@ void print_stats()
 	printf("  accesses:  %d\n", cache_stat_inst.accesses);
 	printf("  misses:    %d\n", cache_stat_inst.misses);
 	if (!cache_stat_inst.accesses)
-	printf("  miss rate: 0 (0)\n"); 
+	printf("  miss rate: 0 (0)\n");
 	else
-	printf("  miss rate: %2.4f (hit rate %2.4f)\n", 
+	printf("  miss rate: %2.4f (hit rate %2.4f)\n",
 	(float)cache_stat_inst.misses / (float)cache_stat_inst.accesses,
 	1.0 - (float)cache_stat_inst.misses / (float)cache_stat_inst.accesses);
 	printf("  replace:   %d\n", cache_stat_inst.replacements);
@@ -339,15 +382,15 @@ void print_stats()
 	printf("  accesses:  %d\n", cache_stat_data.accesses);
 	printf("  misses:    %d\n", cache_stat_data.misses);
 	if (!cache_stat_data.accesses)
-	printf("  miss rate: 0 (0)\n"); 
+	printf("  miss rate: 0 (0)\n");
 	else
-	printf("  miss rate: %2.4f (hit rate %2.4f)\n", 
+	printf("  miss rate: %2.4f (hit rate %2.4f)\n",
 	(float)cache_stat_data.misses / (float)cache_stat_data.accesses,
 	1.0 - (float)cache_stat_data.misses / (float)cache_stat_data.accesses);
 	printf("  replace:   %d\n", cache_stat_data.replacements);
 
 	printf(" TRAFFIC (in words)\n");
-	printf("  demand fetch:  %d\n", cache_stat_inst.demand_fetches + 
+	printf("  demand fetch:  %d\n", cache_stat_inst.demand_fetches +
 	cache_stat_data.demand_fetches);
 	printf("  copies back:   %d\n", cache_stat_inst.copies_back +
 	cache_stat_data.copies_back);
@@ -357,10 +400,7 @@ void dump_cache() {
 	int i;
 	Pcache_line line;
 	for(i = 0; i < c1.n_sets; i++) {
-		if(c1.LRU_head[i] == NULL){
-			continue;
-		}
-		for(line = c1.LRU_head[i]; line != NULL; line = line->LRU_next) {
+		for(line = c1.LRU_head[i]; line != c1.LRU_tail[i]; line = line->LRU_next) {
 			printf("%d ", line->tag);
 		}
 		printf("\n");

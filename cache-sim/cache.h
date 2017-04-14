@@ -33,11 +33,11 @@
 
 /* structure definitions */
 typedef struct cache_line_ {
-	unsigned tag;
-	int dirty;
+	unsigned tag ;
+	int dirty ;
 
-	struct cache_line_ *LRU_next;
-	struct cache_line_ *LRU_prev;
+	struct cache_line_ *LRU_next ;
+	struct cache_line_ *LRU_prev ;
 } cache_line, *Pcache_line;
 
 typedef struct cache_ {
