@@ -1,7 +1,7 @@
 
 /*
- * cache.h
- */
+* cache.h
+*/
 
 
 #define TRUE 1
@@ -33,31 +33,31 @@
 
 /* structure definitions */
 typedef struct cache_line_ {
-  unsigned tag;
-  int dirty;
+	unsigned tag;
+	int dirty;
 
-  struct cache_line_ *LRU_next;
-  struct cache_line_ *LRU_prev;
+	struct cache_line_ *LRU_next;
+	struct cache_line_ *LRU_prev;
 } cache_line, *Pcache_line;
 
 typedef struct cache_ {
-  int size;			/* cache size */
-  int associativity;		/* cache associativity */
-  int n_sets;			/* number of cache sets */
-  unsigned index_mask;		/* mask to find cache index */
-  int index_mask_offset;	/* number of zero bits in mask */
-  Pcache_line *LRU_head;	/* head of LRU list for each set */
-  Pcache_line *LRU_tail;	/* tail of LRU list for each set */
-  int *set_contents;		/* number of valid entries in set */
-  int contents;			/* number of valid entries in cache */
+	int size;			/* cache size */
+	int associativity;		/* cache associativity */
+	int n_sets;			/* number of cache sets */
+	unsigned index_mask;		/* mask to find cache index */
+	int index_mask_offset;	/* number of zero bits in mask */
+	Pcache_line *LRU_head;	/* head of LRU list for each set */
+	Pcache_line *LRU_tail;	/* tail of LRU list for each set */
+	int *set_contents;		/* number of valid entries in set */
+	int contents;			/* number of valid entries in cache */
 } cache, *Pcache;
 
 typedef struct cache_stat_ {
-  int accesses;			/* number of memory references */
-  int misses;			/* number of cache misses */
-  int replacements;		/* number of misses that cause replacments */
-  int demand_fetches;		/* number of fetches */
-  int copies_back;		/* number of write backs */
+	int accesses;			/* number of memory references */
+	int misses;			/* number of cache misses */
+	int replacements;		/* number of misses that cause replacments */
+	int demand_fetches;		/* number of fetches */
+	int copies_back;		/* number of write backs */
 } cache_stat, *Pcache_stat;
 
 
@@ -70,6 +70,7 @@ void delete();
 void insert();
 void dump_settings();
 void print_stats();
+void dump_cache();
 
 
 /* macros */

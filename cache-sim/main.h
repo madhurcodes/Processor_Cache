@@ -1,7 +1,7 @@
 
 /*
- * main.h
- */
+* main.h
+*/
 
 
 #define TRACE_DATA_LOAD 0

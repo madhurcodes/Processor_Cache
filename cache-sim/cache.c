@@ -78,20 +78,19 @@ int value;
 /************************************************************/
 void init_cache()
 {
-
+	int i;
 	/* initialize the cache, and cache statistics data structures */
 	if(cache_split==1){
 		c1.size = cache_isize/4;
-		c1.index_mask = (c1.n_sets-1) << LOG2(cache_block_size);
 		c1.associativity = cache_assoc;
 		c1.index_mask_offset = LOG2(cache_block_size);
 		c1.n_sets = (cache_isize*cache_assoc)/cache_block_size;
+		c1.index_mask = (c1.n_sets-1) << LOG2(cache_block_size);
 		
 		c1.LRU_head = (Pcache_line *) malloc (sizeof(Pcache_line)*c1.n_sets); 
 		c1.LRU_tail = (Pcache_line *) malloc (sizeof(Pcache_line)*c1.n_sets); 
 		c1.set_contents = (int *) malloc( sizeof(int) * c1.n_sets);
 		
-		int i;
 		for (i=0;i<c1.n_sets;i++){
 			c1.LRU_head[i] = NULL;
 			c1.LRU_tail[i] = NULL;
@@ -99,16 +98,15 @@ void init_cache()
 		}
 		
 		c2.size = cache_dsize/4;
-		c2.index_mask = (c2.n_sets-1) << LOG2(cache_block_size);
 		c2.associativity = cache_assoc;
 		c2.index_mask_offset = LOG2(cache_block_size);
 		c2.n_sets = (cache_dsize*cache_assoc)/cache_block_size;
+		c2.index_mask = (c2.n_sets-1) << LOG2(cache_block_size);
 		
 		c2.LRU_head = (Pcache_line *) malloc (sizeof(Pcache_line)*c2.n_sets); 
 		c2.LRU_tail = (Pcache_line *) malloc (sizeof(Pcache_line)*c2.n_sets); 
 		c2.set_contents = (int *) malloc( sizeof(int) * c2.n_sets);
 		
-		int i;
 		for (i=0;i<c2.n_sets;i++){
 			c2.LRU_head[i] = NULL;
 			c2.LRU_tail[i] = NULL;
@@ -118,16 +116,15 @@ void init_cache()
 	else{
 		
 		c1.size = cache_usize/4;
-		c1.index_mask = (c1.n_sets-1) << LOG2(cache_block_size);
 		c1.associativity = cache_assoc;
 		c1.index_mask_offset = LOG2(cache_block_size);
 		c1.n_sets = (cache_usize*cache_assoc)/cache_block_size;
-		
-		c1.LRU_head = (Pcache_line) malloc (sizeof(Pcache_line)*c1.n_sets);  //maybe * after Pcache_line
-		c1.LRU_tail = (Pcache_line) malloc (sizeof(Pcache_line)*c1.n_sets); 
+		c1.index_mask = (c1.n_sets-1) << LOG2(cache_block_size);
+
+		c1.LRU_head = (Pcache_line *) malloc (sizeof(Pcache_line)*c1.n_sets);  //maybe * after Pcache_line
+		c1.LRU_tail = (Pcache_line *) malloc (sizeof(Pcache_line)*c1.n_sets); 
 		c1.set_contents = (int *) malloc( sizeof(int) * c1.n_sets);
 		
-		int i;
 		for (i=0;i<c1.n_sets;i++){
 			c1.LRU_head[i] = NULL;
 			c1.LRU_tail[i] = NULL;
@@ -164,10 +161,27 @@ unsigned addr, access_type;
 	ind = (addr & to_access->index_mask) >> to_access->index_mask_offset;
 	tag = addr >> (to_access->index_mask_offset + LOG2(to_access->n_sets));
 	
+	if(access_type == INSTR_LOAD ){
+		cache_stat_inst.accesses += 1;
+	}
+	else{
+		cache_stat_data.accesses += 1;
+	}
+	
 	//direct only
-	cache_line toInsert;
+	Pcache_line toInsert;
 	if(to_access->LRU_head[ind]== NULL){
-		toInsert = (cache_line) malloc(sizeof(cache_line));
+		
+		if(access_type == INSTR_LOAD ){
+			cache_stat_inst.misses += 1;
+			cache_stat_inst.demand_fetches += cache_block_size/4;
+		}
+		else{
+			cache_stat_data.misses += 1;
+			cache_stat_data.demand_fetches += cache_block_size/4;
+		}
+		
+		toInsert = (Pcache_line) malloc(sizeof(cache_line));
 		toInsert->tag = tag;
 		if(access_type == DATA_STORE){
 			toInsert->dirty = 1;
@@ -175,15 +189,30 @@ unsigned addr, access_type;
 		else{
 			toInsert->dirty = 0;
 		}
-		insert(to_access->LRU_head[ind],to_access->LRU_tail[ind],toInsert);
+		to_access->LRU_head[ind] = toInsert;
+		to_access->LRU_tail[ind] = toInsert;
+	//	insert(to_access->LRU_head[ind],to_access->LRU_tail[ind],toInsert);
 	}
 	else if (to_access->LRU_head[ind]->tag == tag){
 		// got accessed
 	}
 	else{
-		//write back (what to do?)
+		//write back 
+		if(access_type == INSTR_LOAD ){
+			cache_stat_inst.copies_back += cache_block_size/4;
+			cache_stat_inst.misses += 1;
+			cache_stat_inst.replacements += 1;
+			cache_stat_inst.demand_fetches += cache_block_size/4;
+		}
+		else{
+			cache_stat_data.copies_back += cache_block_size/4;
+			cache_stat_data.misses += 1;
+			cache_stat_data.demand_fetches += cache_block_size/4;
+			cache_stat_data.replacements += 1;
+		}
+		
 		delete(to_access->LRU_head[ind],to_access->LRU_tail[ind],to_access->LRU_head[ind]);
-		toInsert = (cache_line) malloc(sizeof(cache_line));
+		toInsert = (Pcache_line) malloc(sizeof(cache_line));
 		toInsert->tag = tag;
 		if(access_type == DATA_STORE){
 			toInsert->dirty = 1;
@@ -191,7 +220,9 @@ unsigned addr, access_type;
 		else{
 			toInsert->dirty = 0;
 		}
-		insert(to_access->LRU_head[ind],to_access->LRU_tail[ind],toInsert);
+		to_access->LRU_head[ind] = toInsert;
+		to_access->LRU_tail[ind] = toInsert;
+		//insert(to_access->LRU_head[ind],to_access->LRU_tail[ind],toInsert);
 	}
 	
 }
@@ -200,9 +231,30 @@ unsigned addr, access_type;
 /************************************************************/
 void flush()
 {
-
 	/* flush the cache */
+	int i;
+	dump_cache();
+	for(i = 0; i < c1.n_sets; i++) {
+		Pcache_line c_line;
+		if(c1.LRU_head[i] != NULL) {
+			for(c_line = c1.LRU_head[i]; c_line != c1.LRU_tail[i]->LRU_next; c_line = c_line->LRU_next) {
+				if(c_line != NULL && c_line->dirty == TRUE) {
+					cache_stat_inst.copies_back += cache_block_size/4;
+				}
+			}
+		}
+	}
 	
+	for(i = 0; i < c2.n_sets; i++) {
+		Pcache_line c_line;
+		if(c2.LRU_head[i] != NULL) {
+			for(c_line = c2.LRU_head[i]; c_line != c2.LRU_tail[i]->LRU_next; c_line = c_line->LRU_next) {
+				if(c_line != NULL && c_line->dirty == TRUE) {
+					cache_stat_data.copies_back += cache_block_size/4;
+				}
+			}
+		}
+	}
 
 }
 /************************************************************/
@@ -301,3 +353,17 @@ void print_stats()
 	cache_stat_data.copies_back);
 }
 /************************************************************/
+void dump_cache() {
+	int i;
+	Pcache_line line;
+	for(i = 0; i < c1.n_sets; i++) {
+		if(c1.LRU_head[i] == NULL){
+			continue;
+		}
+		for(line = c1.LRU_head[i]; line != NULL; line = line->LRU_next) {
+			printf("%d ", line->tag);
+		}
+		printf("\n");
+	}
+	printf("num_sets = %d\n", i);
+}
