@@ -31,45 +31,45 @@ static cache_stat cache_stat_data;
 
 /************************************************************/
 void set_cache_param(param, value)
-int param;
-int value;
+		int param;
+		int value;
 {
 
 	switch (param) {
-	case CACHE_PARAM_BLOCK_SIZE:
-		cache_block_size = value;
-		words_per_block = value / WORD_SIZE;
-		break;
-	case CACHE_PARAM_USIZE:
-		cache_split = FALSE;
-		cache_usize = value;
-		break;
-	case CACHE_PARAM_ISIZE:
-		cache_split = TRUE;
-		cache_isize = value;
-		break;
-	case CACHE_PARAM_DSIZE:
-		cache_split = TRUE;
-		cache_dsize = value;
-		break;
-	case CACHE_PARAM_ASSOC:
-		cache_assoc = value;
-		break;
-	case CACHE_PARAM_WRITEBACK:
-		cache_writeback = TRUE;
-		break;
-	case CACHE_PARAM_WRITETHROUGH:
-		cache_writeback = FALSE;
-		break;
-	case CACHE_PARAM_WRITEALLOC:
-		cache_writealloc = TRUE;
-		break;
-	case CACHE_PARAM_NOWRITEALLOC:
-		cache_writealloc = FALSE;
-		break;
-	default:
-		printf("error set_cache_param: bad parameter value\n");
-		exit(-1);
+		case CACHE_PARAM_BLOCK_SIZE:
+			cache_block_size = value;
+			words_per_block = value / WORD_SIZE;
+			break;
+		case CACHE_PARAM_USIZE:
+			cache_split = FALSE;
+			cache_usize = value;
+			break;
+		case CACHE_PARAM_ISIZE:
+			cache_split = TRUE;
+			cache_isize = value;
+			break;
+		case CACHE_PARAM_DSIZE:
+			cache_split = TRUE;
+			cache_dsize = value;
+			break;
+		case CACHE_PARAM_ASSOC:
+			cache_assoc = value;
+			break;
+		case CACHE_PARAM_WRITEBACK:
+			cache_writeback = TRUE;
+			break;
+		case CACHE_PARAM_WRITETHROUGH:
+			cache_writeback = FALSE;
+			break;
+		case CACHE_PARAM_WRITEALLOC:
+			cache_writealloc = TRUE;
+			break;
+		case CACHE_PARAM_NOWRITEALLOC:
+			cache_writealloc = FALSE;
+			break;
+		default:
+			printf("error set_cache_param: bad parameter value\n");
+			exit(-1);
 	}
 
 }
@@ -139,14 +139,14 @@ void init_cache()
 
 /************************************************************/
 void perform_access(addr, access_type)
-unsigned addr, access_type;
+		unsigned addr, access_type;
 {
 
 	/* handle an access to the cache */
 	cache* to_access;
 
 	if(cache_split==1){
-		if(access_type == INSTR_LOAD ){
+		if(access_type == TRACE_INST_LOAD ){
 			to_access = &c1;
 		}
 		else{
@@ -160,7 +160,7 @@ unsigned addr, access_type;
 	unsigned int tag = addr >> (to_access->index_mask_offset + LOG2(to_access->n_sets));
 
 
-	if(access_type == INSTR_LOAD ){
+	if(access_type == TRACE_INST_LOAD ){
 		cache_stat_inst.accesses += 1;
 	}
 	else{
@@ -169,31 +169,44 @@ unsigned addr, access_type;
 	Pcache_line toInsert;
 	if(to_access->LRU_head[ind]== NULL){
 
-		if(access_type == INSTR_LOAD ){
+		toInsert = (Pcache_line) calloc(1,sizeof(cache_line));
+		toInsert->tag = tag;
+		toInsert->dirty = FALSE;
+
+		if(access_type == TRACE_INST_LOAD ){
 			cache_stat_inst.misses += 1;
 			cache_stat_inst.demand_fetches += cache_block_size/4;
 		}
-		else{
+		else if (access_type == TRACE_DATA_LOAD) {
 			cache_stat_data.misses += 1;
 			cache_stat_data.demand_fetches += cache_block_size/4;
 		}
+		else { //DATA STORE
+			cache_stat_data.misses += 1;
+			if(cache_writealloc == TRUE) {
+				cache_stat_data.demand_fetches += cache_block_size/4;
+				if(cache_writeback == TRUE) {
+					toInsert->dirty = TRUE;
+				}
+				else {
+					//if write through, then copy back one word
+					cache_stat_data.copies_back++;
+				}
+			}
+			else{
+				cache_stat_data.copies_back++;
+			}
 
-		toInsert = (Pcache_line) calloc(1,sizeof(cache_line));
-		toInsert->tag = tag;
-		if(access_type == DATA_STORE){
-			toInsert->dirty = 1;
 		}
-		else{
-			toInsert->dirty = 0;
+
+		if(cache_writealloc == TRUE || access_type != TRACE_DATA_STORE) {
+			to_access->set_contents[ind] = 1;
+			insert(&(to_access->LRU_head[ind]),&(to_access->LRU_tail[ind]),toInsert);
 		}
-		to_access->set_contents[ind] = 1;
-		insert(&(to_access->LRU_head[ind]),&(to_access->LRU_tail[ind]),toInsert);
+
 	}
-	//else if (to_access->LRU_head[ind]->tag == tag){
-	// got accessed
-	//}
+
 	else{
-		//write back
 		Pcache_line c_line;
 		int found_flag = 0;
 		for(c_line = to_access->LRU_head[ind]; c_line != to_access->LRU_tail[ind]->LRU_next; c_line = c_line->LRU_next) {
@@ -205,64 +218,82 @@ unsigned addr, access_type;
 		if(found_flag == 0){
 			toInsert = (Pcache_line) calloc(1,sizeof(cache_line));
 			toInsert->tag = tag;
-			if(access_type == DATA_STORE){
-				toInsert->dirty = 1;
-			}
-			else{
-				toInsert->dirty = 0;
-			}
+			toInsert->dirty = FALSE;
+
 			toInsert->LRU_next = NULL;
 			toInsert->LRU_prev = NULL;
-			if(access_type == INSTR_LOAD ){
-				cache_stat_inst.copies_back += cache_block_size/4;
+
+			if(access_type == TRACE_INST_LOAD ){
 				cache_stat_inst.misses += 1;
 				cache_stat_inst.demand_fetches += cache_block_size/4;
 			}
-			else{
-				cache_stat_data.copies_back += cache_block_size/4;
+			else if(access_type == TRACE_DATA_LOAD) {
 				cache_stat_data.misses += 1;
 				cache_stat_data.demand_fetches += cache_block_size/4;
 			}
+			else{//TRACE_DATA_STORE
+				cache_stat_data.misses += 1;
+				if(cache_writealloc == TRUE) {
+					cache_stat_data.demand_fetches += cache_block_size/4;
+					if(cache_writeback == TRUE) {
+						toInsert->dirty = TRUE;
+					}
+					else {
+						//if write through, then copy back one word
+						cache_stat_data.copies_back++;
+					}
+				}
+				else{
+					cache_stat_data.copies_back++;
+				}
+			}
 
 			if(to_access->set_contents[ind]<to_access->associativity){
-				insert(&(to_access->LRU_head[ind]),&(to_access->LRU_tail[ind]),toInsert);
-				to_access->set_contents[ind] += 1;
+
+				if(cache_writealloc == TRUE || access_type != TRACE_DATA_STORE) {
+					insert(&(to_access->LRU_head[ind]),&(to_access->LRU_tail[ind]),toInsert);
+					to_access->set_contents[ind] += 1;
+				}
+
 			}
 			else{
 
-				if(access_type == INSTR_LOAD ){
+				if(access_type == TRACE_INST_LOAD ){
 					cache_stat_inst.replacements += 1;
 				}
 				else{
-					cache_stat_data.replacements += 1;
+					if(cache_writealloc == TRUE  || access_type != TRACE_DATA_STORE) {
+						cache_stat_data.replacements += 1;
+					}
 				}
-				delete(&(to_access->LRU_head[ind]),&(to_access->LRU_tail[ind]),to_access->LRU_tail[ind]);
-				insert(&(to_access->LRU_head[ind]),&(to_access->LRU_tail[ind]),toInsert);
-				to_access->set_contents[ind] += 1;
+				if(cache_writealloc == TRUE || access_type != TRACE_DATA_STORE) {
+
+					if(to_access->LRU_tail[ind]->dirty == TRUE && (access_type == TRACE_DATA_LOAD || access_type == TRACE_DATA_STORE)) {
+						cache_stat_data.copies_back += cache_block_size/4;
+					}
+					else if(to_access->LRU_tail[ind]->dirty == TRUE && access_type == TRACE_INST_LOAD) {
+						cache_stat_inst.copies_back += cache_block_size/4;
+					}
+
+					delete(&(to_access->LRU_head[ind]),&(to_access->LRU_tail[ind]),to_access->LRU_tail[ind]);
+					insert(&(to_access->LRU_head[ind]),&(to_access->LRU_tail[ind]),toInsert);
+					to_access->set_contents[ind] += 1;
+				}
 			}
 		}
 
-		else{
-			//Found It
-			// printf("\n--------------CD-------------------\n");
-			// dump_cache();
+		else{ // Cache Hit
 			Pcache_line current_line = c_line;
 			delete(&(to_access->LRU_head[ind]),&(to_access->LRU_tail[ind]),c_line);
-			//free(c_line);
-			// printf("\n--------------DELED-------------------\n");
-			// dump_cache();
-			//			if(to_access->LRU_head[ind] == NULL){
-			//				to_access->LRU_head[ind] = current_line;
-			//				to_access->LRU_tail[ind] = current_line;
-			//			}
-			//			else{
 			insert(&(to_access->LRU_head[ind]),&(to_access->LRU_tail[ind]),current_line);
-			//	}
-			if(access_type == DATA_STORE){
-				current_line->dirty = 1;
+			if(access_type == TRACE_DATA_STORE){
+				if(cache_writeback == TRUE){
+					current_line->dirty = 1;
+				}
+				else{
+					cache_stat_data.copies_back++;
+				}
 			}
-			// printf("\n--------------INSED-------------------\n");
-			// dump_cache();
 		}
 
 	}
@@ -304,8 +335,8 @@ void flush()
 
 /************************************************************/
 void delete(head, tail, item)
-Pcache_line *head, *tail;
-Pcache_line item;
+		Pcache_line *head, *tail;
+		Pcache_line item;
 {
 	if (item->LRU_prev) {
 		item->LRU_prev->LRU_next = item->LRU_next;
@@ -326,16 +357,16 @@ Pcache_line item;
 /************************************************************/
 /* inserts at the head of the list */
 void insert(head, tail, item)
-Pcache_line *head, *tail;
-Pcache_line item;
+		Pcache_line *head, *tail;
+		Pcache_line item;
 {
 	item->LRU_next = *head;
 	item->LRU_prev = (Pcache_line)NULL;
 
 	if (item->LRU_next)
-	item->LRU_next->LRU_prev = item;
+		item->LRU_next->LRU_prev = item;
 	else
-	*tail = item;
+		*tail = item;
 
 	*head = item;
 }
@@ -356,9 +387,9 @@ void dump_settings()
 	printf("  Associativity: \t%d\n", cache_assoc);
 	printf("  Block size: \t%d\n", cache_block_size);
 	printf("  Write policy: \t%s\n",
-	cache_writeback ? "WRITE BACK" : "WRITE THROUGH");
+		   cache_writeback ? "WRITE BACK" : "WRITE THROUGH");
 	printf("  Allocation policy: \t%s\n",
-	cache_writealloc ? "WRITE ALLOCATE" : "WRITE NO ALLOCATE");
+		   cache_writealloc ? "WRITE ALLOCATE" : "WRITE NO ALLOCATE");
 }
 /************************************************************/
 
@@ -371,29 +402,29 @@ void print_stats()
 	printf("  accesses:  %d\n", cache_stat_inst.accesses);
 	printf("  misses:    %d\n", cache_stat_inst.misses);
 	if (!cache_stat_inst.accesses)
-	printf("  miss rate: 0 (0)\n");
+		printf("  miss rate: 0 (0)\n");
 	else
-	printf("  miss rate: %2.4f (hit rate %2.4f)\n",
-	(float)cache_stat_inst.misses / (float)cache_stat_inst.accesses,
-	1.0 - (float)cache_stat_inst.misses / (float)cache_stat_inst.accesses);
+		printf("  miss rate: %2.4f (hit rate %2.4f)\n",
+			   (float)cache_stat_inst.misses / (float)cache_stat_inst.accesses,
+			   1.0 - (float)cache_stat_inst.misses / (float)cache_stat_inst.accesses);
 	printf("  replace:   %d\n", cache_stat_inst.replacements);
 
 	printf(" DATA\n");
 	printf("  accesses:  %d\n", cache_stat_data.accesses);
 	printf("  misses:    %d\n", cache_stat_data.misses);
 	if (!cache_stat_data.accesses)
-	printf("  miss rate: 0 (0)\n");
+		printf("  miss rate: 0 (0)\n");
 	else
-	printf("  miss rate: %2.4f (hit rate %2.4f)\n",
-	(float)cache_stat_data.misses / (float)cache_stat_data.accesses,
-	1.0 - (float)cache_stat_data.misses / (float)cache_stat_data.accesses);
+		printf("  miss rate: %2.4f (hit rate %2.4f)\n",
+			   (float)cache_stat_data.misses / (float)cache_stat_data.accesses,
+			   1.0 - (float)cache_stat_data.misses / (float)cache_stat_data.accesses);
 	printf("  replace:   %d\n", cache_stat_data.replacements);
 
 	printf(" TRAFFIC (in words)\n");
 	printf("  demand fetch:  %d\n", cache_stat_inst.demand_fetches +
-	cache_stat_data.demand_fetches);
+									cache_stat_data.demand_fetches);
 	printf("  copies back:   %d\n", cache_stat_inst.copies_back +
-	cache_stat_data.copies_back);
+									cache_stat_data.copies_back);
 }
 /************************************************************/
 void dump_cache() {
