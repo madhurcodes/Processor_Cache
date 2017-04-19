@@ -101,5 +101,5 @@ struct StallWithForwardStruct{
 };
 typedef struct StallWithForwardStruct CheckSWithF;
 
-FILE* fpin, *fpin3, *fpout, *fpout2, *fpout3;
-char *filename, *filename2, *filename3;
+FILE* fpin, *fpin3, *fpout, *fpout2;
+char *filename, *filename2;

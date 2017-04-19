@@ -70,8 +70,9 @@ void flush2();
 void delete();
 void insert();
 void dump_settings();
-void print_stats(FILE* outf);
+void print_stats();
 void dump_cache();
+int* ret_stuff ();
 
 
 /* macros */

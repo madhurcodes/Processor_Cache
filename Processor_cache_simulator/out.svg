@@ -77,8 +77,7 @@
          x="365.20868"
          id="tspan2580"
          sodipodi:role="line" /></text>
-  </g> <g 
- id="g4377"
+  </g> <g style="display:inline;opacity:0.3" id="g4377"
     >
    <text x="1265" y="670" font-family="Verdana" font-size="25"> Instruction Fetch Thread</text>  <path
        sodipodi:nodetypes="ccccc"
@@ -333,7 +332,7 @@
          y="582.88965"
          x="265.49155"
          id="tspan2887-7"
-         sodipodi:role="line">3c090000</tspan></text>
+         sodipodi:role="line"></tspan></text>
   </g> <g style="display:inline;opacity:0.3"  id="g4423"
      >
    <text x="1265" y="770" font-family="Verdana" font-size="25"> Instruction Decode Thread  </text>  <path

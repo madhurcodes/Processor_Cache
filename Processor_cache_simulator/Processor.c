@@ -7,7 +7,7 @@
 #include "cache.h"
 #include "main.h"
 
-FILE* fpout, *fpout2,* fpout3;
+FILE* fpout, *fpout2;
 int InstructionsExecuted = 0;
 instruction* instHead = NULL;
 long program_counter = 0,numberOfInstructions=0; 
@@ -403,9 +403,7 @@ void DoComputations(){
 		}
 		else if (strcmp("cache",inp)==0)
 		{
-			fpout3 = fopen(filename3,"w");
-			print_stats(fpout3);
-			fclose(fpout3);
+			print_stats();
 		}
 		else if (strcmp("continue",inp)==0)
 		{
@@ -505,9 +503,7 @@ void DoComputations(){
 		numberofCycles++;
 	}
 	flush2();
-	fpout3 = fopen(filename3,"w");
-	print_stats(fpout3);
-	fclose(fpout3);
+	int *returned = ret_stuff();
 	float ipc = InstructionsExecuted*1.0/numberofCycles; // change to InstructionsExecuted if needed
 	float time = 0.5*numberofCycles;
 	float idle = (numberofCycles-InstructionsExecuted)*0.5; // change to InstructionsExecuted if needed
@@ -521,9 +517,16 @@ void DoComputations(){
 	fprintf(fpout2,"Idle time (%%),%.4f%%\n",idle);
 	fprintf(fpout2,"Cache Summary\n");
 	fprintf(fpout2,"Cache L1-I\n");
-	fprintf(fpout2,"num cache accesses,%d\n",numberofInst);
+	fprintf(fpout2,"num cache accesses,%d\n",returned[0]);
+	fprintf(fpout2,"num cache misses,%d\n",returned[1]);
+	fprintf(fpout2,"miss rate,%.4f%%\n",100.0*returned[1]/returned[0]);
 	fprintf(fpout2,"Cache L1-D\n");
-	fprintf(fpout2,"num cache accesses,%d\n",numOfCaches);
+	fprintf(fpout2,"num cache accesses,%d\n",returned[2]);
+	fprintf(fpout2,"num cache misses,%d\n",returned[3]);
+	fprintf(fpout2,"miss rate,%.4f%%\n",100.0*returned[3]/returned[2]);
+	fprintf(fpout2,"DRAM Summary\n");
+	fprintf(fpout2,"num cache accesses,%d\n",returned[0]+returned[2]);
+	fprintf(fpout2,"average dram access latency (ns),%d\n",returned[4]);
 	fclose(fpout2);
 	return;
 }
