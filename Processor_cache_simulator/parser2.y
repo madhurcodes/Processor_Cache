@@ -22,7 +22,7 @@
 %%
 
 root:
-	calc END_OF_FILE	{  init_cache(); dump_settings(); trfile = fopen("tracefile","r"); play_trace(trfile); print_stats(); return 0;}      
+	calc END_OF_FILE	{  init_cache(); dump_settings(); return 0;}      
 ;
 		
 calc:		

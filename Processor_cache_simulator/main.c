@@ -8,6 +8,7 @@
 #include <stdio.h>
 #include "cache.h"
 #include "main.h"
+#include <string.h>
 
 static FILE *traceFile;
 /*

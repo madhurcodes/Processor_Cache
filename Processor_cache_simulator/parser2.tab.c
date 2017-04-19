@@ -1260,7 +1260,7 @@ yyreduce:
     {
         case 2:
 #line 25 "parser2.y" /* yacc.c:1646  */
-    {  init_cache(); dump_settings(); trfile = fopen("tracefile","r"); play_trace(trfile); print_stats(); return 0;}
+    {  init_cache(); dump_settings(); return 0;}
 #line 1265 "parser2.tab.c" /* yacc.c:1646  */
     break;
 

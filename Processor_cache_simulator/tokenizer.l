@@ -26,7 +26,7 @@ void yyerror(char* str){
 }
 
 int main(int argc, char* argv[]){
-	if (argc!=5) {
+	if (argc!=6) {
 		printf("Enter the Correct Format.\n");
 		exit(0);
 	}
@@ -36,6 +36,7 @@ int main(int argc, char* argv[]){
 	if(fpin3==NULL) {printf("File Not Exist"); exit(0);}
 	filename = argv[3];
 	filename2 = argv[4];
+	filename3 = argv[5];
 	yyin= fpin;
 	akashMin = fpin3;	
 	akashMparse();
