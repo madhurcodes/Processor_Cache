@@ -73,7 +73,7 @@ extern int akashMdebug;
 
 union YYSTYPE
 {
-#line 10 "parser2.y" /* yacc.c:1909  */
+#line 12 "parser2.y" /* yacc.c:1909  */
 
   char* str;
   int intval;

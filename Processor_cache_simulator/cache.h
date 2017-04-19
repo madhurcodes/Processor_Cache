@@ -30,7 +30,8 @@
 #define DATA_STORE 1
 #define DATA_LOAD 0
 #define INSTR_LOAD 2
-
+#include <stdio.h>
+#include <stdlib.h>
 /* structure definitions */
 typedef struct cache_line_ {
 	unsigned tag ;
@@ -69,7 +70,7 @@ void flush2();
 void delete();
 void insert();
 void dump_settings();
-void print_stats();
+void print_stats(FILE* outf);
 void dump_cache();
 
 

@@ -78,8 +78,10 @@
 	extern int akashMlex ();
 	extern void akashMerror ( char *);
 	FILE *trfile;
+	extern float frequency;
+	extern int latency;
 
-#line 83 "parser2.tab.c" /* yacc.c:339  */
+#line 85 "parser2.tab.c" /* yacc.c:339  */
 
 # ifndef YY_NULLPTR
 #  if defined __cplusplus && 201103L <= __cplusplus
@@ -142,13 +144,13 @@ extern int akashMdebug;
 
 union YYSTYPE
 {
-#line 10 "parser2.y" /* yacc.c:355  */
+#line 12 "parser2.y" /* yacc.c:355  */
 
   char* str;
   int intval;
   float floatval;
 
-#line 152 "parser2.tab.c" /* yacc.c:355  */
+#line 154 "parser2.tab.c" /* yacc.c:355  */
 };
 
 typedef union YYSTYPE YYSTYPE;
@@ -165,7 +167,7 @@ int akashMparse (void);
 
 /* Copy the second part of user declarations.  */
 
-#line 169 "parser2.tab.c" /* yacc.c:358  */
+#line 171 "parser2.tab.c" /* yacc.c:358  */
 
 #ifdef short
 # undef short
@@ -464,8 +466,8 @@ static const yytype_uint8 yytranslate[] =
   /* YYRLINE[YYN] -- Source line where rule number YYN was defined.  */
 static const yytype_uint8 yyrline[] =
 {
-       0,    25,    25,    28,    29,    34,    35,    36,    37,    38,
-      39,    40,    41,    42,    43,    44,    45,    46,    47
+       0,    27,    27,    30,    31,    36,    37,    38,    39,    40,
+      41,    42,    43,    44,    45,    46,    47,    48,    49
 };
 #endif
 
@@ -1259,103 +1261,103 @@ yyreduce:
   switch (yyn)
     {
         case 2:
-#line 25 "parser2.y" /* yacc.c:1646  */
+#line 27 "parser2.y" /* yacc.c:1646  */
     {  init_cache(); dump_settings(); return 0;}
-#line 1265 "parser2.tab.c" /* yacc.c:1646  */
+#line 1267 "parser2.tab.c" /* yacc.c:1646  */
     break;
 
   case 4:
-#line 29 "parser2.y" /* yacc.c:1646  */
+#line 31 "parser2.y" /* yacc.c:1646  */
     {;}
-#line 1271 "parser2.tab.c" /* yacc.c:1646  */
+#line 1273 "parser2.tab.c" /* yacc.c:1646  */
     break;
 
   case 5:
-#line 34 "parser2.y" /* yacc.c:1646  */
+#line 36 "parser2.y" /* yacc.c:1646  */
     {set_cache_param(CACHE_PARAM_WRITEALLOC, 1);}
-#line 1277 "parser2.tab.c" /* yacc.c:1646  */
+#line 1279 "parser2.tab.c" /* yacc.c:1646  */
     break;
 
   case 6:
-#line 35 "parser2.y" /* yacc.c:1646  */
+#line 37 "parser2.y" /* yacc.c:1646  */
     {set_cache_param(CACHE_PARAM_ISIZE,(yyvsp[0].intval));}
-#line 1283 "parser2.tab.c" /* yacc.c:1646  */
+#line 1285 "parser2.tab.c" /* yacc.c:1646  */
     break;
 
   case 7:
-#line 36 "parser2.y" /* yacc.c:1646  */
+#line 38 "parser2.y" /* yacc.c:1646  */
     {set_cache_param(CACHE_PARAM_ASSOC, (yyvsp[0].intval));}
-#line 1289 "parser2.tab.c" /* yacc.c:1646  */
+#line 1291 "parser2.tab.c" /* yacc.c:1646  */
     break;
 
   case 8:
-#line 37 "parser2.y" /* yacc.c:1646  */
+#line 39 "parser2.y" /* yacc.c:1646  */
     {printf("_");}
-#line 1295 "parser2.tab.c" /* yacc.c:1646  */
+#line 1297 "parser2.tab.c" /* yacc.c:1646  */
     break;
 
   case 9:
-#line 38 "parser2.y" /* yacc.c:1646  */
+#line 40 "parser2.y" /* yacc.c:1646  */
     {if((yyvsp[0].intval)==1) {set_cache_param(CACHE_PARAM_WRITETHROUGH, 1);} else{set_cache_param(CACHE_PARAM_WRITEBACK,1);}}
-#line 1301 "parser2.tab.c" /* yacc.c:1646  */
+#line 1303 "parser2.tab.c" /* yacc.c:1646  */
     break;
 
   case 10:
-#line 39 "parser2.y" /* yacc.c:1646  */
+#line 41 "parser2.y" /* yacc.c:1646  */
     {set_cache_param(CACHE_PARAM_BLOCK_SIZE,(yyvsp[0].intval));}
-#line 1307 "parser2.tab.c" /* yacc.c:1646  */
+#line 1309 "parser2.tab.c" /* yacc.c:1646  */
     break;
 
   case 11:
-#line 40 "parser2.y" /* yacc.c:1646  */
+#line 42 "parser2.y" /* yacc.c:1646  */
     {set_cache_param(CACHE_PARAM_WRITEALLOC, 1);}
-#line 1313 "parser2.tab.c" /* yacc.c:1646  */
+#line 1315 "parser2.tab.c" /* yacc.c:1646  */
     break;
 
   case 12:
-#line 41 "parser2.y" /* yacc.c:1646  */
+#line 43 "parser2.y" /* yacc.c:1646  */
     {set_cache_param(CACHE_PARAM_DSIZE, (yyvsp[0].intval));}
-#line 1319 "parser2.tab.c" /* yacc.c:1646  */
+#line 1321 "parser2.tab.c" /* yacc.c:1646  */
     break;
 
   case 13:
-#line 42 "parser2.y" /* yacc.c:1646  */
+#line 44 "parser2.y" /* yacc.c:1646  */
     {set_cache_param(CACHE_PARAM_ASSOC, (yyvsp[0].intval));}
-#line 1325 "parser2.tab.c" /* yacc.c:1646  */
+#line 1327 "parser2.tab.c" /* yacc.c:1646  */
     break;
 
   case 14:
-#line 43 "parser2.y" /* yacc.c:1646  */
+#line 45 "parser2.y" /* yacc.c:1646  */
     {printf("_");}
-#line 1331 "parser2.tab.c" /* yacc.c:1646  */
+#line 1333 "parser2.tab.c" /* yacc.c:1646  */
     break;
 
   case 15:
-#line 44 "parser2.y" /* yacc.c:1646  */
+#line 46 "parser2.y" /* yacc.c:1646  */
     {if((yyvsp[0].intval)==1) {set_cache_param(CACHE_PARAM_WRITETHROUGH, 1);} else{set_cache_param(CACHE_PARAM_WRITEBACK,1);}}
-#line 1337 "parser2.tab.c" /* yacc.c:1646  */
+#line 1339 "parser2.tab.c" /* yacc.c:1646  */
     break;
 
   case 16:
-#line 45 "parser2.y" /* yacc.c:1646  */
+#line 47 "parser2.y" /* yacc.c:1646  */
     {set_cache_param(CACHE_PARAM_BLOCK_SIZE, (yyvsp[0].intval));}
-#line 1343 "parser2.tab.c" /* yacc.c:1646  */
+#line 1345 "parser2.tab.c" /* yacc.c:1646  */
     break;
 
   case 17:
-#line 46 "parser2.y" /* yacc.c:1646  */
-    {printf("_");}
-#line 1349 "parser2.tab.c" /* yacc.c:1646  */
+#line 48 "parser2.y" /* yacc.c:1646  */
+    {frequency = (yyvsp[0].floatval);}
+#line 1351 "parser2.tab.c" /* yacc.c:1646  */
     break;
 
   case 18:
-#line 47 "parser2.y" /* yacc.c:1646  */
-    {printf("_");}
-#line 1355 "parser2.tab.c" /* yacc.c:1646  */
+#line 49 "parser2.y" /* yacc.c:1646  */
+    {latency = (yyvsp[0].intval);}
+#line 1357 "parser2.tab.c" /* yacc.c:1646  */
     break;
 
 
-#line 1359 "parser2.tab.c" /* yacc.c:1646  */
+#line 1361 "parser2.tab.c" /* yacc.c:1646  */
       default: break;
     }
   /* User semantic actions sometimes alter yychar, and that requires
@@ -1583,5 +1585,5 @@ yyreturn:
 #endif
   return yyresult;
 }
-#line 50 "parser2.y" /* yacc.c:1906  */
+#line 52 "parser2.y" /* yacc.c:1906  */
 

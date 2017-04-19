@@ -5,6 +5,8 @@
 	extern int akashMlex ();
 	extern void akashMerror ( char *);
 	FILE *trfile;
+	extern float frequency;
+	extern int latency;
 %}
 
 %union {
@@ -43,8 +45,8 @@ exp:
   |REP2 EQ LRU           {printf("_");}
   |WRT2 EQ VAL           {if($3==1) {set_cache_param(CACHE_PARAM_WRITETHROUGH, 1);} else{set_cache_param(CACHE_PARAM_WRITEBACK,1);}}
   |BS2 EQ VAL            {set_cache_param(CACHE_PARAM_BLOCK_SIZE, $3);} 
-  |FRQ EQ FLOAT          {printf("_");}
-  |LAT EQ VAL            {printf("_");}
+  |FRQ EQ FLOAT          {frequency = $3;}
+  |LAT EQ VAL            {latency = $3;}
   ;
 
 %%

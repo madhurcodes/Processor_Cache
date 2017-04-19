@@ -7,7 +7,7 @@
 #include "cache.h"
 #include "main.h"
 
-FILE* fpout, *fpout2;
+FILE* fpout, *fpout2,* fpout3;
 int InstructionsExecuted = 0;
 instruction* instHead = NULL;
 long program_counter = 0,numberOfInstructions=0; 
@@ -403,7 +403,9 @@ void DoComputations(){
 		}
 		else if (strcmp("cache",inp)==0)
 		{
-			print_stats();
+			fpout3 = fopen(filename3,"w");
+			print_stats(fpout3);
+			fclose(fpout3);
 		}
 		else if (strcmp("continue",inp)==0)
 		{
@@ -449,7 +451,7 @@ void DoComputations(){
 		fflush(stdin);
 	}
 	flush2();
-	print_stats();
+
 	init_cache();
 	IF_ID.left = emptyStruct1;
 	IF_ID.right = emptyStruct1;
@@ -503,7 +505,9 @@ void DoComputations(){
 		numberofCycles++;
 	}
 	flush2();
-	print_stats();
+	fpout3 = fopen(filename3,"w");
+	print_stats(fpout3);
+	fclose(fpout3);
 	float ipc = InstructionsExecuted*1.0/numberofCycles; // change to InstructionsExecuted if needed
 	float time = 0.5*numberofCycles;
 	float idle = (numberofCycles-InstructionsExecuted)*0.5; // change to InstructionsExecuted if needed

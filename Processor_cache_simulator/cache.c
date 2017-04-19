@@ -29,6 +29,8 @@ static cache c2;
 static cache_stat cache_stat_inst;
 static cache_stat cache_stat_data;
 
+float frequency;
+int latency;
 /************************************************************/
 void set_cache_param(param, value)
 		int param;
@@ -394,36 +396,37 @@ void dump_settings()
 /************************************************************/
 
 /************************************************************/
-void print_stats()
-{
-	printf("\n*** CACHE STATISTICS ***\n");
+void print_stats(FILE* outf)
+{	
+	fprintf(outf,"Freq- %f\n Latency - %d \n", frequency,latency);
+	fprintf(outf,"\n*** CACHE STATISTICS ***\n");
 
-	printf(" INSTRUCTIONS\n");
-	printf("  accesses:  %d\n", cache_stat_inst.accesses);
-	printf("  misses:    %d\n", cache_stat_inst.misses);
+	fprintf(outf," INSTRUCTIONS\n");
+	fprintf(outf,"  accesses:  %d\n", cache_stat_inst.accesses);
+	fprintf(outf,"  misses:    %d\n", cache_stat_inst.misses);
 	if (!cache_stat_inst.accesses)
-		printf("  miss rate: 0 (0)\n");
+		fprintf(outf,"  miss rate: 0 (0)\n");
 	else
-		printf("  miss rate: %2.4f (hit rate %2.4f)\n",
+		fprintf(outf,"  miss rate: %2.4f (hit rate %2.4f)\n",
 			   (float)cache_stat_inst.misses / (float)cache_stat_inst.accesses,
 			   1.0 - (float)cache_stat_inst.misses / (float)cache_stat_inst.accesses);
-	printf("  replace:   %d\n", cache_stat_inst.replacements);
+	fprintf(outf,"  replace:   %d\n", cache_stat_inst.replacements);
 
-	printf(" DATA\n");
-	printf("  accesses:  %d\n", cache_stat_data.accesses);
-	printf("  misses:    %d\n", cache_stat_data.misses);
+	fprintf(outf," DATA\n");
+	fprintf(outf,"  accesses:  %d\n", cache_stat_data.accesses);
+	fprintf(outf,"  misses:    %d\n", cache_stat_data.misses);
 	if (!cache_stat_data.accesses)
-		printf("  miss rate: 0 (0)\n");
+		fprintf(outf,"  miss rate: 0 (0)\n");
 	else
-		printf("  miss rate: %2.4f (hit rate %2.4f)\n",
+		fprintf(outf,"  miss rate: %2.4f (hit rate %2.4f)\n",
 			   (float)cache_stat_data.misses / (float)cache_stat_data.accesses,
 			   1.0 - (float)cache_stat_data.misses / (float)cache_stat_data.accesses);
-	printf("  replace:   %d\n", cache_stat_data.replacements);
+	fprintf(outf,"  replace:   %d\n", cache_stat_data.replacements);
 
-	printf(" TRAFFIC (in words)\n");
-	printf("  demand fetch:  %d\n", cache_stat_inst.demand_fetches +
+	fprintf(outf," TRAFFIC (in words)\n");
+	fprintf(outf,"  demand fetch:  %d\n", cache_stat_inst.demand_fetches +
 									cache_stat_data.demand_fetches);
-	printf("  copies back:   %d\n", cache_stat_inst.copies_back +
+	fprintf(outf,"  copies back:   %d\n", cache_stat_inst.copies_back +
 									cache_stat_data.copies_back);
 }
 /************************************************************/
