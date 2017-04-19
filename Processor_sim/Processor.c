@@ -16,12 +16,15 @@ int InstructionMemory[16384][32];
 long MULSPECIAL;
 char* filename;
 int pcFlag=0;
+int contFlag = 0;
 char *print1 = "",*print2 = "",*print3 = "",*print4 = "",*print5 = "";
 int flush=0;
 DecodedInstruction emptyStruct;
 IF_ID_Data emptyStruct1;
 EX_MEM_DATA emptyStruct3;
 Mem_WB_Data emptyStruct4;
+int listOfBreakPoints[16364];
+int breakpoint;
 IF_ID_T IF_ID;
 ID_EX_T ID_EX;
 EX_MEM_T EX_MEM;
@@ -168,7 +171,9 @@ void printValueinRegister(int d){
 }
 void DoComputations(){
 	int i=0,j=0;
+	contFlag = 0;
 	MULSPECIAL = 0;
+	breakpoint = 163400;
 	emptyStruct1.instr = NULL;
 	emptyStruct1.rd = 60;
 	emptyStruct1.rs = 60;
@@ -231,6 +236,7 @@ void DoComputations(){
 	}
 	for (i = 0; i < 16384; i++)
 	{
+		listOfBreakPoints[i] = 0;
 		for (j = 0; j < 32; j++)
 		{
 			InstructionMemory[i][j] = 0;
@@ -250,7 +256,8 @@ void DoComputations(){
 	writeInstructionMemory();
 
 	char inp[100] = "", *mem_add;
-	int mem_no, iter_var;
+	int mem_no, iter_var, memi;
+	long insmemindex;
 	int MAD[8], ma, am;
 	while(strcmp("exit",inp)!=0){
 		printf("\n>>");
@@ -369,6 +376,64 @@ void DoComputations(){
 				printf("\n");
 			}
 		}
+		else if(strcmp("break",inp)==0){
+			insmemindex = 0;
+			scanf("%s",mem_add);
+			for (ma = 0; ma < 8; ma++)
+			{
+				MAD[ma] = (int)(*(mem_add + 2 + ma) - '0');
+			}
+			for (memi = 0; memi < 8; memi++)
+			{
+				insmemindex = insmemindex + MAD[7-memi]*pow(16,memi);
+			}
+			insmemindex = insmemindex - 4194304;
+			if (insmemindex>=0 && insmemindex%4==0)
+			{
+				insmemindex = insmemindex/4;
+				listOfBreakPoints[insmemindex] = 1;
+				printf("Breakpoint inserted successfully\n");
+			}
+			else{
+				printf("Error: no instruction here\n");
+			}
+			
+		}
+		else if (strcmp("continue",inp)==0)
+		{
+			contFlag = 1;
+		}
+		
+		else if (strcmp("delete",inp)==0)
+		{
+			insmemindex = 0;
+			scanf("%s",mem_add);
+			for (ma = 0; ma < 8; ma++)
+			{
+				MAD[ma] = (int)(*(mem_add + 2 + ma) - '0');
+			}
+			for (memi = 0; memi < 8; memi++)
+			{
+				insmemindex = insmemindex + MAD[7-memi]*pow(16,memi);
+			}
+			insmemindex = insmemindex - 4194304;
+			if (insmemindex>=0 && insmemindex%4==0)
+			{
+				insmemindex = insmemindex/4;
+				listOfBreakPoints[insmemindex] = 0;
+				printf("Breakpoint deleted successfully\n");
+			}
+			else{
+				printf("Error: no breakpoint here\n");
+			}
+		}
+		else if (strcmp("run",inp)==0)
+		{
+			for (ma = 0; ma < 16384; ma++)
+			{
+				listOfBreakPoints[ma] = 0;
+			}
+		}
 		else if(strcmp("exit",inp)==0){
 			break;
 		}
@@ -415,6 +480,10 @@ void DoComputations(){
 		mul_hi[i] = 0;
 		p_c[i] = 0;
 	}
+	for (i = 0; i < 16384; i++)
+	{
+		listOfBreakPoints[i] = 0;
+	}
 	numberofCycles = 0;
 	program_counter = 0;
 	pcFlag = 0;
@@ -426,11 +495,11 @@ void DoComputations(){
 		step();
 		numberofCycles++;
 	}
-	float ipc = numberofInst*1.0/numberofCycles; // change to InstructionsExecuted if needed
+	float ipc = InstructionsExecuted*1.0/numberofCycles; // change to InstructionsExecuted if needed
 	float time = 0.5*numberofCycles;
-	float idle = (numberofCycles-numberofInst)*0.5; // change to InstructionsExecuted if needed
+	float idle = (numberofCycles-InstructionsExecuted)*0.5; // change to InstructionsExecuted if needed
 	fpout2 = fopen(filename2,"w");
-	fprintf(fpout2,"Instructions,%d\n",numberofInst); // change to InstructionsExecuted if needed
+	fprintf(fpout2,"Instructions,%d\n",InstructionsExecuted); // change to InstructionsExecuted if needed
 	fprintf(fpout2,"Cycles,%d\n",numberofCycles);
 	fprintf(fpout2,"IPC,%.4f\n",ipc);
 	fprintf(fpout2,"Time (ns),%.4f\n",time);
@@ -549,8 +618,16 @@ void decodeTheInstruction(int instBin[32]){
 	rt_temp = covertToInteger(instBin,20,16);
 	rs_temp = covertToInteger(instBin,25,21);
 	offset_temp = covertToInteger(instBin,14,0) - instBin[15]*pow(2,15);
+
 	if (k==0)
 	{
+		if (covertToInteger(instBin,20,0)==8)
+		{
+			IF_ID.left.name = "jr";
+			IF_ID.left.rs = rs_temp;
+			IF_ID.left.identifier = "s";
+		}
+		else{
 		fn = covertToInteger(instBin,5,0);
 		shamt_temp = covertToInteger(instBin,10,6);
 		IF_ID.left.rd = rd_temp;
@@ -565,6 +642,11 @@ void decodeTheInstruction(int instBin[32]){
 		{
 			IF_ID.left.name = "add";
 			IF_ID.left.identifier = "std";
+		}
+		else if (fn==9 && shamt_temp==0)
+		{
+			IF_ID.left.name = "jalr";
+			IF_ID.left.identifier = "s";
 		}
 		else if(fn==36 && shamt_temp==0)
 		{
@@ -611,6 +693,7 @@ void decodeTheInstruction(int instBin[32]){
 			printf("Invalid Instruction\n");
 			exit(0);
 		}
+	}
 	}
 	else if(k==28 && offset_temp==0){
 		IF_ID.left.name = "madd";
@@ -663,6 +746,12 @@ void decodeTheInstruction(int instBin[32]){
 	else if (k==2)
 	{
 		IF_ID.left.name = "j";
+		IF_ID.left.identifier = "notread";
+		IF_ID.left.target = covertToInteger(instBin,25,0);
+	}
+	else if (k==3)
+	{
+		IF_ID.left.name = "jal";
 		IF_ID.left.identifier = "notread";
 		IF_ID.left.target = covertToInteger(instBin,25,0);
 	}
@@ -815,6 +904,32 @@ void advanceProgramCounter(int R){
 	}
 	
 	return;
+}
+
+void advanceJumpProgramCounter(int tar){
+		long tem = program_counter-2;
+		program_counter = program_counter - 2;
+		program_counter = program_counter*4 + 4194304;
+		program_counter = program_counter / pow(2,28);
+		program_counter = program_counter * pow(2,28);
+		program_counter = program_counter + tar*4 - 4194304;
+		program_counter = program_counter/4;
+		int R = program_counter - tem;
+		if (R==1)
+		{
+			flushTheInstructions(0);
+			pcFlag = 0;
+		}
+		else if (R==2)
+		{
+			pcFlag = 1;
+			flushTheInstructions(1);
+		}
+		else
+		{
+			pcFlag = 1;
+			flushTheInstructions(2);
+		}
 }
 
 int checkDataDependence(){
@@ -1275,32 +1390,65 @@ void executeTheInstruction(){
 	}
 	else if (strcmp(nameTemp,"j")==0)
 	{
-		long tem = program_counter;
 		EX_MEM.left.insname = "j";
-		program_counter = program_counter*4 + 4194304;
-		program_counter = program_counter / pow(2,28);
-		program_counter = program_counter * pow(2,28);
-		program_counter = program_counter + IF_ID.right.target*4 - 4194304;
-		program_counter = program_counter/4;
-		int R = program_counter - tem;
-		if (R==0)
-		{
-			flushTheInstructions(0);
-			pcFlag = 0;
-		}
-		else if (R==1)
-		{
-			program_counter = program_counter - 1;
-			pcFlag = 1;
-			flushTheInstructions(1);
-		}
-		else
-		{
-			program_counter = program_counter - 1;
-			pcFlag = 1;
-			flushTheInstructions(2);
-		}
+		advanceJumpProgramCounter(ID_EX.right.target);
 		PATH1.rd = 50;
+	}
+	else if (strcmp(nameTemp,"jr")==0)
+	{
+		EX_MEM.left.insname = "j";
+		int tarad = 0;
+		for (t = 0; t < 32; t++)
+		{
+			tarad = tarad + var1[t]*pow(2,t);
+		}
+		advanceJumpProgramCounter(tarad);
+		PATH1.rd = 50;
+	}
+	else if (strcmp(nameTemp,"jal")==0)
+	{
+		EX_MEM.left.insname = "a";
+		EX_MEM.left.desRegister = 31;
+		int nextstr = program_counter;
+		nextstr = program_counter * 4;
+		nextstr = nextstr + 4194304;
+		for (t = 0; t < 32; t++)
+		{
+			result[t] = (nextstr)%2;
+			nextstr = nextstr/2;
+		}
+		for (t = 0; t < 32; t++)
+		{
+			EX_MEM.left.Data[t] = result[t];
+			PATH1.value[t] = result[t];
+		}
+		advanceJumpProgramCounter(ID_EX.right.target);
+		PATH1.rd = 31;
+	}
+	else if (strcmp(nameTemp,"jalr")==0)
+	{
+		EX_MEM.left.insname = "a";
+		EX_MEM.left.desRegister = desArith;
+		int nextstr = program_counter;
+		nextstr = program_counter * 4;
+		nextstr = nextstr + 4194304;
+		for (t = 0; t < 32; t++)
+		{
+			result[t] = (nextstr)%2;
+			nextstr = nextstr/2;
+		}
+		for (t = 0; t < 32; t++)
+		{
+			EX_MEM.left.Data[t] = result[t];
+			PATH1.value[t] = result[t];
+		}
+		int tarad = 0;
+		for (t = 0; t < 32; t++)
+		{
+			tarad = tarad + var1[t]*pow(2,t);
+		}
+		advanceJumpProgramCounter(tarad);
+		PATH1.rd = desArith;
 	}
 	else if (strcmp(nameTemp,"lb")==0)
 	{
@@ -1539,18 +1687,26 @@ void *instructionFetch(void *value){
 
 	if (program_counter<numberOfInstructions)
 	{
+		if (listOfBreakPoints[program_counter]==1 && contFlag==0)
+		{
+			breakpoint = program_counter;
+			print1 = "";
+			IF_ID.left = emptyStruct1;
+			ActivatedThreads[0] = 0;
+			printf("\nNo instruction fetched due to break point\n");
+		}
+		else{
+		breakpoint = 16400;
+		contFlag = 0;
 		decodeTheInstruction(InstructionMemory[program_counter]);
 		if (checkStallingWithForwarding())
 		{
 			IF_ID.left.instr = "NOP";
-		//	printf("---------------------");
 			IF_ID.left.rd = 50;
 			IF_ID.left.rs = 50;
 			IF_ID.left.rt = 50;
 			print1 = "NOP";
 			ActivatedThreads[0] = 0;
-	//		nopcount++;
-
 		}
 		else{
 			for (j = 0; j < 32; j++)
@@ -1566,6 +1722,7 @@ void *instructionFetch(void *value){
 			ActivatedThreads[0] = 1;
 			numberofInst++; 
 		}
+	}
 	}
 	else{
 		print1 = "";
@@ -1783,7 +1940,7 @@ void *writeMemory(void *value){
 		}
 		ActivatedThreads[3] = 1;
 	}
-	else if(strcmp(nm,"b")==0){
+	else if(strcmp(nm,"b")==0 || strcmp(nm,"j")==0){
 		MEM_WB.left.instr = EX_MEM.right.instr;
 		MEM_WB.left.insname = EX_MEM.right.insname;
 		MEM_WB.left.flag = 0;
@@ -1831,7 +1988,7 @@ void *writeRegister(void *value){
 		print5 = "";
 		ActivatedThreads[4] = 0;	
 	}
-	else if (strcmp(MEM_WB.right.insname,"b")==0)
+	else if (strcmp(MEM_WB.right.insname,"b")==0 || strcmp(MEM_WB.right.insname,"j")==0)
 	{
 		print5 = MEM_WB.right.instr;
 		ActivatedThreads[4] = 0;
@@ -1885,10 +2042,10 @@ void step(){
 		{
 			pcFlag=0;
 		}
-		else
+		else if(breakpoint==16400)
 		{
-		program_counter++;
-	}
+			program_counter++;
+		}
 	}
 
 	dataHazardCheckingUnit.name = IF_ID.left.name;
