@@ -1,6 +1,7 @@
 # Processor_Cache
 COP290 Project
 
+MFLO to be implemented.
 
 Add checks that Cache parameters are powers of two and Cache Size > Block Size.
 
