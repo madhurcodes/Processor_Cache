@@ -1,8 +1,6 @@
 # Processor_Cache
 COP290 Project
 
-MFLO to be implemented.
-
 Add checks that Cache parameters are powers of two and Cache Size > Block Size.
 
 Right now it ignores most settings of i_cache in cfg because only one set of settings was declaredin cache.c, REMIND change this.  

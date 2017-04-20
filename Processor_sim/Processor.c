@@ -4,9 +4,6 @@
 #include <string.h>
 #include <math.h>
 
-#include "cache.h"
-#include "main.h"
-
 FILE* fpout, *fpout2;
 int InstructionsExecuted = 0;
 instruction* instHead = NULL;
@@ -401,10 +398,6 @@ void DoComputations(){
 			}
 			
 		}
-		else if (strcmp("cache",inp)==0)
-		{
-			print_stats();
-		}
 		else if (strcmp("continue",inp)==0)
 		{
 			contFlag = 1;
@@ -448,9 +441,6 @@ void DoComputations(){
 		}
 		fflush(stdin);
 	}
-	flush2();
-
-	init_cache();
 	IF_ID.left = emptyStruct1;
 	IF_ID.right = emptyStruct1;
 	ID_EX.left = emptyStruct;
@@ -502,8 +492,6 @@ void DoComputations(){
 		step();
 		numberofCycles++;
 	}
-	flush2();
-	int *returned = ret_stuff();
 	float ipc = InstructionsExecuted*1.0/numberofCycles; // change to InstructionsExecuted if needed
 	float time = 0.5*numberofCycles;
 	float idle = (numberofCycles-InstructionsExecuted)*0.5; // change to InstructionsExecuted if needed
@@ -515,18 +503,13 @@ void DoComputations(){
 	fprintf(fpout2,"Idle time (ns),%.4f\n",idle);
 	idle = (idle/time)*100;
 	fprintf(fpout2,"Idle time (%%),%.4f%%\n",idle);
+	idle = (idle/time)*100;
+	fprintf(fpout2,"Idle time (%%),%.4f%%\n",idle);
 	fprintf(fpout2,"Cache Summary\n");
 	fprintf(fpout2,"Cache L1-I\n");
-	fprintf(fpout2,"num cache accesses,%d\n",returned[0]);
-	fprintf(fpout2,"num cache misses,%d\n",returned[1]);
-	fprintf(fpout2,"miss rate,%.4f%%\n",100.0*returned[1]/returned[0]);
+	fprintf(fpout2,"num cache accesses,%d\n",numberofInst);
 	fprintf(fpout2,"Cache L1-D\n");
-	fprintf(fpout2,"num cache accesses,%d\n",returned[2]);
-	fprintf(fpout2,"num cache misses,%d\n",returned[3]);
-	fprintf(fpout2,"miss rate,%.4f%%\n",100.0*returned[3]/returned[2]);
-	fprintf(fpout2,"DRAM Summary\n");
-	fprintf(fpout2,"num cache accesses,%d\n",returned[0]+returned[2]);
-	fprintf(fpout2,"average dram access latency (ns),%d\n",returned[4]);
+	fprintf(fpout2,"num cache accesses,%d\n",numOfCaches);
 	fclose(fpout2);
 	return;
 }
@@ -1746,10 +1729,6 @@ void *instructionFetch(void *value){
 			ActivatedThreads[0] = 0;
 		}
 		else{
-			unsigned int addr;
-			addr = program_counter*4 + 4194304;
-			perform_access(addr,2);
-
 			for (j = 0; j < 32; j++)
 			{
 				IF_ID.left.instructionBinary[j] = InstructionMemory[program_counter][j];
@@ -1892,8 +1871,6 @@ void *writeMemory(void *value){
 				exit(1);
 			}
 		}
-		addr1 = temp_es + 268500992;
-		perform_access(addr1,1);
 		ActivatedThreads[3] = 1;
 	}
 	else if (strcmp(nm,"sw")==0)
@@ -1920,8 +1897,6 @@ void *writeMemory(void *value){
 
 			}
 		}
-		addr1 = temp_es + 268500989;
-		perform_access(addr1,1);
 		ActivatedThreads[3] = 1;
 	}
 	else if (strcmp(nm,"lb")==0)
@@ -1946,8 +1921,6 @@ void *writeMemory(void *value){
 					exit(1);
 			}
 		}
-		addr1 = temp_es + 268500992;
-		perform_access(addr1,0);
 		ActivatedThreads[3] = 1;
 	}
 	else if (strcmp(nm,"lw")==0)
@@ -1973,8 +1946,6 @@ void *writeMemory(void *value){
 			}
 			}
 		}
-		addr1 = temp_es + 268500989;
-		perform_access(addr1,0);
 		ActivatedThreads[3] = 1;
 	}
 	else if (strcmp(nm,"a")==0)
