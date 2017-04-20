@@ -16,10 +16,13 @@ static int cache_usize = DEFAULT_CACHE_SIZE;
 static int cache_isize = DEFAULT_CACHE_SIZE;
 static int cache_dsize = DEFAULT_CACHE_SIZE;
 static int cache_block_size = DEFAULT_CACHE_BLOCK_SIZE;
-static int words_per_block = DEFAULT_CACHE_BLOCK_SIZE / WORD_SIZE;
+static int words_per_block = DEFAULT_CACHE_BLOCK_SIZE / WORD_SIZE; //not messin with
 static int cache_assoc = DEFAULT_CACHE_ASSOC;
 static int cache_writeback = DEFAULT_CACHE_WRITEBACK;
 static int cache_writealloc = DEFAULT_CACHE_WRITEALLOC;
+static int cache_dassoc = DEFAULT_CACHE_ASSOC;
+static int cache_dwriteback = DEFAULT_CACHE_WRITEBACK;
+static int cache_dblock_size = DEFAULT_CACHE_BLOCK_SIZE;
 
 /* cache model data structures */
 static Pcache icache;
@@ -69,6 +72,19 @@ void set_cache_param(param, value)
 		case CACHE_PARAM_NOWRITEALLOC:
 			cache_writealloc = FALSE;
 			break;
+		case CACHE_PARAM_DWRITEBACK:
+			cache_dwriteback = TRUE;
+			break;
+		case CACHE_PARAM_DWRITETHROUGH:
+			cache_dwriteback = FALSE;
+			break;
+		case CACHE_PARAM_DASSOC:
+			cache_dassoc = value;
+			break;
+		case CACHE_PARAM_DBLOCK_SIZE:
+			cache_dblock_size = value;
+			//words_per_block = value / WORD_SIZE;
+			break;
 		default:
 			printf("error set_cache_param: bad parameter value\n");
 			exit(-1);
@@ -88,7 +104,8 @@ void init_cache()
 		c1.index_mask_offset = LOG2(cache_block_size);
 		c1.n_sets = cache_isize/(cache_assoc*cache_block_size);
 		c1.index_mask = (c1.n_sets-1) << LOG2(cache_block_size);
-
+		
+		c1.writeback = cache_writeback;
 		c1.LRU_head = (Pcache_line *) calloc(1,sizeof(Pcache_line)*c1.n_sets);
 		c1.LRU_tail = (Pcache_line *) calloc(1,sizeof(Pcache_line)*c1.n_sets);
 		c1.set_contents = (int *) calloc(1, sizeof(int) * c1.n_sets);
@@ -100,10 +117,11 @@ void init_cache()
 		}
 
 		c2.size = cache_dsize/4;
-		c2.associativity = cache_assoc;
-		c2.index_mask_offset = LOG2(cache_block_size);
-		c2.n_sets = cache_dsize/(cache_assoc*cache_block_size);
-		c2.index_mask = (c2.n_sets-1) << LOG2(cache_block_size);
+		c2.associativity = cache_dassoc;
+		c2.writeback = cache_dwriteback;
+		c2.index_mask_offset = LOG2(cache_dblock_size);
+		c2.n_sets = cache_dsize/(cache_dassoc*cache_dblock_size);
+		c2.index_mask = (c2.n_sets-1) << LOG2(cache_dblock_size);
 
 		c2.LRU_head = (Pcache_line *) calloc(1,sizeof(Pcache_line)*c2.n_sets);
 		c2.LRU_tail = (Pcache_line *) calloc(1,sizeof(Pcache_line)*c2.n_sets);
@@ -187,7 +205,7 @@ void perform_access(addr, access_type)
 			cache_stat_data.misses += 1;
 			if(cache_writealloc == TRUE) {
 				cache_stat_data.demand_fetches += cache_block_size/4;
-				if(cache_writeback == TRUE) {
+				if(to_access->writeback == TRUE) {
 					toInsert->dirty = TRUE;
 				}
 				else {
@@ -237,7 +255,7 @@ void perform_access(addr, access_type)
 				cache_stat_data.misses += 1;
 				if(cache_writealloc == TRUE) {
 					cache_stat_data.demand_fetches += cache_block_size/4;
-					if(cache_writeback == TRUE) {
+					if(to_access->writeback == TRUE) {
 						toInsert->dirty = TRUE;
 					}
 					else {
@@ -289,7 +307,7 @@ void perform_access(addr, access_type)
 			delete(&(to_access->LRU_head[ind]),&(to_access->LRU_tail[ind]),c_line);
 			insert(&(to_access->LRU_head[ind]),&(to_access->LRU_tail[ind]),current_line);
 			if(access_type == TRACE_DATA_STORE){
-				if(cache_writeback == TRUE){
+				if(to_access->writeback == TRUE){
 					current_line->dirty = 1;
 				}
 				else{

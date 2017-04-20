@@ -26,6 +26,11 @@
 #define CACHE_PARAM_WRITETHROUGH 6
 #define CACHE_PARAM_WRITEALLOC 7
 #define CACHE_PARAM_NOWRITEALLOC 8
+#define CACHE_PARAM_DASSOC 9
+#define CACHE_PARAM_DWRITEBACK 10
+#define CACHE_PARAM_DWRITETHROUGH 11
+#define CACHE_PARAM_DBLOCK_SIZE 12
+
 
 #define DATA_STORE 1
 #define DATA_LOAD 0
@@ -44,6 +49,7 @@ typedef struct cache_line_ {
 typedef struct cache_ {
 	int size;			/* cache size */
 	int associativity;		/* cache associativity */
+	int writeback;
 	int n_sets;			/* number of cache sets */
 	unsigned index_mask;		/* mask to find cache index */
 	int index_mask_offset;	/* number of zero bits in mask */

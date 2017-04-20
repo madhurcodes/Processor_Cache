@@ -2,6 +2,7 @@
 	#include <stdio.h>
 	#include "cache.h"
 	#include "main.h"
+	#include<string.h>
 	extern int akashMlex ();
 	extern void akashMerror ( char *);
 	FILE *trfile;
@@ -33,18 +34,18 @@ calc:
 
 
 exp: 
-  PER1 EQ BOOL          {set_cache_param(CACHE_PARAM_WRITEALLOC, 1);}
+  PER1 EQ BOOL          {if(strcmp($3,"true")==0){setIFlag(1);} else if (strcmp($3,"false")==0){setIFlag(0);} else{printf("\nInvalid Perfect Option Specified"};}
   |CAC1 EQ VAL			{set_cache_param(CACHE_PARAM_ISIZE,$3);}
   |ASS1 EQ VAL			{set_cache_param(CACHE_PARAM_ASSOC, $3);}
-  |REP1 EQ LRU			{printf("_");}
+  |REP1 EQ LRU			{}
   |WRT1 EQ VAL           {if($3==1) {set_cache_param(CACHE_PARAM_WRITETHROUGH, 1);} else{set_cache_param(CACHE_PARAM_WRITEBACK,1);}}
   |BS1 EQ VAL            {set_cache_param(CACHE_PARAM_BLOCK_SIZE,$3);}
-  |PER2 EQ BOOL          {set_cache_param(CACHE_PARAM_WRITEALLOC, 1);}
+  |PER2 EQ BOOL          {if(strcmp($3,"true")==0){setDFlag(1);} else if (strcmp($3,"false")==0){setDFlag(0);} else{printf("\nInvalid Perfect Option Specified"};}
   |CAC2 EQ VAL           {set_cache_param(CACHE_PARAM_DSIZE, $3);}
-  |ASS2 EQ VAL           {set_cache_param(CACHE_PARAM_ASSOC, $3);}
-  |REP2 EQ LRU           {printf("_");}
-  |WRT2 EQ VAL           {if($3==1) {set_cache_param(CACHE_PARAM_WRITETHROUGH, 1);} else{set_cache_param(CACHE_PARAM_WRITEBACK,1);}}
-  |BS2 EQ VAL            {set_cache_param(CACHE_PARAM_BLOCK_SIZE, $3);} 
+  |ASS2 EQ VAL           {set_cache_param(CACHE_PARAM_DASSOC, $3);}
+  |REP2 EQ LRU           {}
+  |WRT2 EQ VAL           {if($3==1) {set_cache_param(CACHE_PARAM_DWRITETHROUGH, 1);} else{set_cache_param(CACHE_PARAM_DWRITEBACK,1);}}
+  |BS2 EQ VAL            {set_cache_param(CACHE_PARAM_DBLOCK_SIZE, $3);} 
   |FRQ EQ FLOAT          {frequency = $3;}
   |LAT EQ VAL            {latency = $3;}
   ;
