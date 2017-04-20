@@ -689,6 +689,11 @@ void decodeTheInstruction(int instBin[32]){
 			IF_ID.left.name = "add";
 			IF_ID.left.identifier = "std";
 		}
+		else if (fn==33 && shamt_temp==0)
+		{
+			IF_ID.left.name = "move";
+			IF_ID.left.identifier = "std";
+		}
 		else if (fn==9 && shamt_temp==0)
 		{
 			IF_ID.left.name = "jalr";
@@ -1111,6 +1116,21 @@ void executeTheInstruction(){
 		{
 			result[t] = (var1[t] + var2[t] + carry)%2;
 			carry = (var1[t] + var2[t] + carry)/2;
+		}
+		for (t = 0; t < 32; t++)
+		{
+			EX_MEM.left.Data[t] = result[t];
+			PATH1.value[t] = result[t];
+		}
+		PATH1.rd = desArith;
+	}
+	else if (strcmp(nameTemp,"move")==0)
+	{
+		EX_MEM.left.insname = "a";
+		EX_MEM.left.desRegister = desArith;
+		for (t = 0; t < 32; t++)
+		{
+			result[t] = var2[t];
 		}
 		for (t = 0; t < 32; t++)
 		{
@@ -1583,10 +1603,15 @@ void executeTheInstruction(){
 		EX_MEM.left.insname = "a";
 		EX_MEM.left.desRegister = desLoad;
 		int carry = 0;
-		for (t = 0; t < 32; t++)
+		for (t = 0; t < 16; t++)
 		{
 			result[t] = (var1[t] + offsetArr[t] + carry)%2;
 			carry = (var1[t] + offsetArr[t] + carry)/2;
+		}
+		for (t = 16; t < 32; t++)
+		{
+			result[t] = (var1[t] + offsetArr[15] + carry)%2;
+			carry = (var1[t] + offsetArr[15] + carry)/2;
 		}
 		for (t = 0; t < 32; t++)
 		{
@@ -1601,7 +1626,7 @@ void executeTheInstruction(){
 		for (t = 0; t < 16; t++)
 		{
 			result[t] = or(var1[t],offsetArr[t]);
-			result[t+16] = or(var1[t],offsetArr[15]);
+			result[t+16] = or(var1[t+16],0);
 		}
 
 		for (t = 0; t < 32; t++)
