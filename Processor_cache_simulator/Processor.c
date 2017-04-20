@@ -42,11 +42,21 @@ int numOfCaches = 0;
 int mul_hi[32];
 int mul_lo[32];
 int p_c[32];
+int perIFlag = 0;
+int perDFlag = 0;
 DataForwardingUnit emptyStruct6;
 int path2flag=0;
 int write(int is_g1,int is_g2, int is_g3, int is_g4, int is_g5);
 void step();
 void writeInstructionMemory();
+
+void setIFlag(int fl){
+	perIFlag = fl;
+}
+
+void setDFlag(int fl){
+	perDFlag = fl;
+}
  
 void addNode(char* s){
 	numberOfInstructions++;
@@ -518,12 +528,26 @@ void DoComputations(){
 	fprintf(fpout2,"Cache Summary\n");
 	fprintf(fpout2,"Cache L1-I\n");
 	fprintf(fpout2,"num cache accesses,%d\n",returned[0]);
-	fprintf(fpout2,"num cache misses,%d\n",returned[1]);
-	fprintf(fpout2,"miss rate,%.4f%%\n",100.0*returned[1]/returned[0]);
+	if (perIFlag==0)
+	{
+		fprintf(fpout2,"num cache misses,%d\n",returned[1]);
+		fprintf(fpout2,"miss rate,%.4f%%\n",100.0*returned[1]/returned[0]);
+	}
+	else{
+		fprintf(fpout2,"num cache misses,0\n");
+		fprintf(fpout2,"miss rate,100%%\n");
+	}
 	fprintf(fpout2,"Cache L1-D\n");
 	fprintf(fpout2,"num cache accesses,%d\n",returned[2]);
-	fprintf(fpout2,"num cache misses,%d\n",returned[3]);
-	fprintf(fpout2,"miss rate,%.4f%%\n",100.0*returned[3]/returned[2]);
+	if (perDFlag==0)
+	{
+		fprintf(fpout2,"num cache misses,%d\n",returned[3]);
+		fprintf(fpout2,"miss rate,%.4f%%\n",100.0*returned[3]/returned[2]);
+	}
+	else{
+		fprintf(fpout2,"num cache misses,0\n");
+		fprintf(fpout2,"miss rate,100%%\n");
+	}
 	fprintf(fpout2,"DRAM Summary\n");
 	fprintf(fpout2,"num cache accesses,%d\n",returned[0]+returned[2]);
 	fprintf(fpout2,"average dram access latency (ns),%d\n",returned[4]);
