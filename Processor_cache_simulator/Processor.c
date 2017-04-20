@@ -643,6 +643,12 @@ void decodeTheInstruction(int instBin[32]){
 			IF_ID.left.rs = rs_temp;
 			IF_ID.left.identifier = "s";
 		}
+		else if (covertToInteger(instBin,31,16)==0 && covertToInteger(instBin,10,0)==18)
+		{
+			IF_ID.left.name = "mflo";
+			IF_ID.left.rd = rd_temp;
+			IF_ID.left.identifier = "d";
+		}
 		else{
 		fn = covertToInteger(instBin,5,0);
 		shamt_temp = covertToInteger(instBin,10,6);
@@ -1081,6 +1087,21 @@ void executeTheInstruction(){
 		{
 			result[t] = (var1[t] + var2[t] + carry)%2;
 			carry = (var1[t] + var2[t] + carry)/2;
+		}
+		for (t = 0; t < 32; t++)
+		{
+			EX_MEM.left.Data[t] = result[t];
+			PATH1.value[t] = result[t];
+		}
+		PATH1.rd = desArith;
+	}
+	else if (strcmp(nameTemp,"mflo")==0)
+	{
+		EX_MEM.left.insname = "a";
+		EX_MEM.left.desRegister = desArith;
+		for (t = 0; t < 32; t++)
+		{
+			result[t] = mul_lo[t];
 		}
 		for (t = 0; t < 32; t++)
 		{
