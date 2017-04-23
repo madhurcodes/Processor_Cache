@@ -513,10 +513,11 @@ void DoComputations(){
 		numberofCycles++;
 	}
 	flush2();
-	int *returned = ret_stuff();
+	int *returned = ret_stuff(); //returned[4] = latency
+	float freq = giveFreq();
 	float ipc = InstructionsExecuted*1.0/numberofCycles; // change to InstructionsExecuted if needed
-	float time = 0.5*numberofCycles;
-	float idle = (numberofCycles-InstructionsExecuted)*0.5; // change to InstructionsExecuted if needed
+	float time = (1.0*numberofCycles/freq) + (returned[4]*(returned[1]+returned[3]))*1.0;
+	float idle = (numberofCycles-InstructionsExecuted)*1.0/freq + (returned[4]*(returned[1]+returned[3]))*1.0; // change to InstructionsExecuted if needed
 	fpout2 = fopen(filename2,"w");
 	fprintf(fpout2,"Instructions,%d\n",InstructionsExecuted); // change to InstructionsExecuted if needed
 	fprintf(fpout2,"Cycles,%d\n",numberofCycles);
@@ -550,7 +551,7 @@ void DoComputations(){
 	}
 	fprintf(fpout2,"DRAM Summary\n");
 	fprintf(fpout2,"num cache accesses,%d\n",returned[0]+returned[2]);
-	fprintf(fpout2,"average dram access latency (ns),%d\n",returned[4]);
+	fprintf(fpout2,"average dram access latency (ns),%.0f\n",(returned[4]*(returned[1]+returned[3]) + (1.0/freq)*(returned[0]+ returned[2]-returned[1]-returned[3]) )/ (returned[0]+ returned[2]) );
 	fclose(fpout2);
 	return;
 }

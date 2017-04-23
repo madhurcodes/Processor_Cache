@@ -79,7 +79,7 @@ void dump_settings();
 void print_stats();
 void dump_cache();
 int* ret_stuff ();
-
+float giveFreq();
 
 /* macros */
 #define LOG2(x) ((int) rint((log((double) (x))) / (log(2.0))))
