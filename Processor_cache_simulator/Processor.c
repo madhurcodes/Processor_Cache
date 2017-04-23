@@ -514,6 +514,15 @@ void DoComputations(){
 	}
 	flush2();
 	int *returned = ret_stuff(); //returned[4] = latency
+	if (perIFlag==1)
+	{
+		returned[1] = 0;
+	}
+
+	if (perDFlag==1)
+	{
+		returned[3] = 0;
+	}
 	float freq = giveFreq();
 	float ipc = InstructionsExecuted*1.0/numberofCycles; // change to InstructionsExecuted if needed
 	float time = (1.0*numberofCycles/freq) + (returned[4]*(returned[1]+returned[3]))*1.0;
@@ -529,26 +538,12 @@ void DoComputations(){
 	fprintf(fpout2,"Cache Summary\n");
 	fprintf(fpout2,"Cache L1-I\n");
 	fprintf(fpout2,"num cache accesses,%d\n",returned[0]);
-	if (perIFlag==0)
-	{
-		fprintf(fpout2,"num cache misses,%d\n",returned[1]);
-		fprintf(fpout2,"miss rate,%.4f%%\n",100.0*returned[1]/returned[0]);
-	}
-	else{
-		fprintf(fpout2,"num cache misses,0\n");
-		fprintf(fpout2,"miss rate,100%%\n");
-	}
+    fprintf(fpout2,"num cache misses,%d\n",returned[1]);
+	fprintf(fpout2,"miss rate,%.4f%%\n",100.0*returned[1]/returned[0]);
 	fprintf(fpout2,"Cache L1-D\n");
 	fprintf(fpout2,"num cache accesses,%d\n",returned[2]);
-	if (perDFlag==0)
-	{
-		fprintf(fpout2,"num cache misses,%d\n",returned[3]);
-		fprintf(fpout2,"miss rate,%.4f%%\n",100.0*returned[3]/returned[2]);
-	}
-	else{
-		fprintf(fpout2,"num cache misses,0\n");
-		fprintf(fpout2,"miss rate,100%%\n");
-	}
+	fprintf(fpout2,"num cache misses,%d\n",returned[3]);
+	fprintf(fpout2,"miss rate,%.4f%%\n",100.0*returned[3]/returned[2]);
 	fprintf(fpout2,"DRAM Summary\n");
 	fprintf(fpout2,"num cache accesses,%d\n",returned[0]+returned[2]);
 	fprintf(fpout2,"average dram access latency (ns),%.0f\n",(returned[4]*(returned[1]+returned[3]) + (1.0/freq)*(returned[0]+ returned[2]-returned[1]-returned[3]) )/ (returned[0]+ returned[2]) );
