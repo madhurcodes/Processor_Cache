@@ -164,7 +164,8 @@ void perform_access(addr, access_type)
 
 	/* handle an access to the cache */
 	cache* to_access;
-
+	if(access_type==1)
+printf("--------%x\n",addr);
 	if(cache_split==1){
 		if(access_type == TRACE_INST_LOAD ){
 			to_access = &c1;
