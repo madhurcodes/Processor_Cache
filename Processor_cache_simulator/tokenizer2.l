@@ -24,6 +24,7 @@
 <INITIAL>"\n"								   {BEGIN INITIAL;}
 <INITIAL>"\r"								   {BEGIN INITIAL;}
 <INITIAL><<EOF>>					{ BEGIN INITIAL;return END_OF_FILE;}
+<INITIAL>.                            {printf("Wrong Input\n"); exit(0);}
 <STAGE>"[perf_model/l1_icache]" {BEGIN ICACHE;}
 <STAGE>"[perf_model/l1_dcache]" {BEGIN DCACHE;}
 <STAGE>"[perf_model/core]"      {BEGIN CORE;}
@@ -31,7 +32,7 @@
 <STAGE>" "						{BEGIN STAGE;}
 <STAGE>"\n"						{BEGIN STAGE;}
 <STAGE>"\r"						{BEGIN STAGE;}
-
+<STAGE>.                            {printf("Wrong Input\n"); exit(0);}
 
 <ICACHE>"perfect"				{BEGIN ICACHE; return PER1; }
 <ICACHE>"cache_size"            {BEGIN ICACHE; return CAC1; }
@@ -47,17 +48,19 @@
 	strcpy(akashMlval.str, akashMtext);BEGIN ICACHE;return BOOL;}
 <ICACHE>[0-9]+                  {akashMlval.intval = atoi(akashMtext);BEGIN ICACHE;return VAL; }
 <ICACHE>"block_size"			{BEGIN EQX;return BS1;}
+<ICACHE>.                            {printf("Wrong Input\n"); exit(0);}
 
 <EQX>"="						{BEGIN ENDICACHE;return EQ;}
 <EQX>"\n"					{BEGIN EQX;}
 <EQX>"\r"					{BEGIN EQX;}
 <EQX>" "                     {BEGIN EQX;}
-
+<EQX>.                            {printf("Wrong Input\n"); exit(0);}
 
 <ENDICACHE>[0-9]+						{akashMlval.intval = atoi(akashMtext);BEGIN STAGE;return VAL;}
 <ENDICACHE>"\n"					{BEGIN ENDICACHE;}
 <ENDICACHE>"\r"					{BEGIN ENDICACHE;}
 <ENDICACHE>" "                     {BEGIN ENDICACHE;}
+<ENDICACHE>.                            {printf("Wrong Input\n"); exit(0);}
 
 
 <DCACHE>"perfect"				{BEGIN DCACHE; return PER2; }
@@ -74,14 +77,21 @@
 <DCACHE>("true"|"false")        {akashMlval.str= (char*)malloc(sizeof(char)*akashMleng + 2);
 	strcpy(akashMlval.str, akashMtext);BEGIN DCACHE;return BOOL;}
 <DCACHE>[0-9]+                  {akashMlval.intval = atoi(akashMtext);BEGIN DCACHE;return VAL; }
+<DCACHE>.                            {printf("Wrong Input\n"); exit(0);}
+
+
 <EQ2>"="						{BEGIN ENDDCACHE;return EQ; }
 <EQ2>"\n"					{BEGIN EQ2;}
 <EQ2>"\r"					{BEGIN EQ2;}
 <EQ2>" "                     {BEGIN EQ2;}
+<EQ2>.                            {printf("Wrong Input\n"); exit(0);}
+
+
 <ENDDCACHE>[0-9]+						{akashMlval.intval = atoi(akashMtext);BEGIN STAGE;return VAL; }
 <ENDDCACHE>"\n"					{BEGIN ENDDCACHE;}
 <ENDDCACHE>"\r"					{BEGIN ENDDCACHE;}
 <ENDDCACHE>" "                     {BEGIN ENDDCACHE;}
+<ENDDCACHE>.                            {printf("Wrong Input\n"); exit(0);}
 
 
 
@@ -91,6 +101,7 @@
 <CORE>" "						{BEGIN CORE;}
 <CORE>"\n"						{BEGIN CORE;}
 <CORE>"\r"						{BEGIN CORE;}
+<CORE>.                            {printf("Wrong Input\n"); exit(0);}
 
 <DRAM>"latency"                 {BEGIN DRAM;return LAT;}
 <DRAM>"="						{BEGIN DRAM;return EQ; }
@@ -98,6 +109,7 @@
 <DRAM>" "						{BEGIN DRAM;}
 <DRAM>"\n"						{BEGIN DRAM;}
 <DRAM>"\r"						{BEGIN DRAM;}
+<DRAM>.                            {printf("Wrong Input\n"); exit(0);}
 %%
 
 
