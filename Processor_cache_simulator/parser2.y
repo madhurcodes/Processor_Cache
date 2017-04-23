@@ -27,7 +27,7 @@
 %%
 
 root:
-	calc END_OF_FILE	{  init_cache(); dump_settings(); return 0;}      
+	calc END_OF_FILE	{  checkValues(); init_cache(); dump_settings(); return 0;}      
 ;
 		
 calc:		
@@ -36,17 +36,17 @@ calc:
 
 
 exp: 
-  PER1 EQ BOOL          {if(strcmp($3,"true")==0){setIFlag(1);} else if (strcmp($3,"false")==0){setIFlag(0);} else{printf("\nInvalid Perfect Option Specified");}}
+  PER1 EQ BOOL          {if(strcmp($3,"true")==0){setIFlag(1);} else if (strcmp($3,"false")==0){setIFlag(0);} else{printf("\nInvalid Perfect Option Specified\n");exit(0);}}
   |CAC1 EQ VAL			{set_cache_param(CACHE_PARAM_ISIZE,(1024*($3)));}
   |ASS1 EQ VAL			{set_cache_param(CACHE_PARAM_ASSOC, $3);}
   |REP1 EQ LRU			{}
-  |WRT1 EQ VAL           {if($3==1) {set_cache_param(CACHE_PARAM_WRITETHROUGH, 1);} else{set_cache_param(CACHE_PARAM_WRITEBACK,1);}}
+  |WRT1 EQ VAL           {if($3==1) {set_cache_param(CACHE_PARAM_WRITETHROUGH, 1);} else if($3==0){set_cache_param(CACHE_PARAM_WRITEBACK,1);} else{printf("Error: Write through value is not correct\n"); exit(0);}}
   |BS1 EQ VAL            {set_cache_param(CACHE_PARAM_BLOCK_SIZE,$3);}
-  |PER2 EQ BOOL          {if(strcmp($3,"true")==0){setDFlag(1);} else if (strcmp($3,"false")==0){setDFlag(0);} else{printf("\nInvalid Perfect Option Specified");}}
+  |PER2 EQ BOOL          {if(strcmp($3,"true")==0){setDFlag(1);} else if (strcmp($3,"false")==0){setDFlag(0);} else{printf("\nInvalid Perfect Option Specified\n");exit(0);}}
   |CAC2 EQ VAL           {set_cache_param(CACHE_PARAM_DSIZE, (1024*($3)));}
   |ASS2 EQ VAL           {set_cache_param(CACHE_PARAM_DASSOC, $3);}
   |REP2 EQ LRU           {}
-  |WRT2 EQ VAL           {if($3==1) {set_cache_param(CACHE_PARAM_DWRITETHROUGH, 1);} else{set_cache_param(CACHE_PARAM_DWRITEBACK,1);}}
+  |WRT2 EQ VAL           {if($3==1) {set_cache_param(CACHE_PARAM_DWRITETHROUGH, 1);} else if($3==0){set_cache_param(CACHE_PARAM_DWRITEBACK,1);} else{printf("Error: Write through value is not correct\n"); exit(0);}}
   |BS2 EQ VAL            {set_cache_param(CACHE_PARAM_DBLOCK_SIZE, $3);} 
   |FRQ EQ FLOAT          {frequency = $3;}
   |LAT EQ VAL            {latency = $3;}

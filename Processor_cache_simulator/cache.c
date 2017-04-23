@@ -35,6 +35,80 @@ static cache_stat cache_stat_data;
 float frequency;
 int latency;
 /************************************************************/
+
+
+int divByTwo(int val){
+	if (val==0)
+	{
+		return 0;
+	}
+	while((val%2)==0){
+		val = val / 2;
+	}
+	if (val==1)
+	{
+		return 1;
+	}
+	else{
+		return 0;
+	}
+}
+
+void checkValues(){
+	if (cache_assoc<1 || cache_dassoc<1)
+	{
+		printf("Error: Associativity is less than 1\n");
+		exit(0);
+	}
+	if (divByTwo(cache_isize)==0)
+	{
+		printf("Error: Cache Size not possible\n");
+		exit(0);
+	}
+	if (divByTwo(cache_dsize)==0)
+	{
+		printf("Error: Cache Size not possible\n");
+		exit(0);
+	}
+	if (divByTwo(cache_block_size)==0 || divByTwo(cache_dblock_size)==0)
+	{
+		printf("Error: Block Size not possible\n");
+		exit(0);
+	}
+	if ((cache_block_size*cache_assoc)>cache_isize)
+	{
+		printf("Block size is more than cache size\n");
+		exit(0);
+	}
+	if ((cache_dblock_size*cache_dassoc)>cache_dsize)
+	{
+		printf("Block size is more than cache size\n");
+		exit(0);
+	}
+	if (cache_writeback!=0 && cache_writeback!=1)
+	{
+		printf("Error: Write Back is not correct\n");
+		exit(0);
+	}
+	if (cache_dwriteback!=0 && cache_dwriteback!=1)
+	{
+		printf("Error: Write Back is not correct\n");
+		exit(0);
+	}
+	if (frequency<=0)
+	{
+		printf("Error: frequency is zero\n");
+		exit(0);
+	}
+	if (latency<0)
+	{
+		printf("Error: Latency cannot be negative\n");
+		exit(0);
+	}
+ 	return;
+}
+
+
 void set_cache_param(param, value)
 		int param;
 		int value;

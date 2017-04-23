@@ -1265,7 +1265,7 @@ yyreduce:
     {
         case 2:
 #line 30 "parser2.y" /* yacc.c:1646  */
-    {  init_cache(); dump_settings(); return 0;}
+    {  checkValues(); init_cache(); dump_settings(); return 0;}
 #line 1270 "parser2.tab.c" /* yacc.c:1646  */
     break;
 
@@ -1277,7 +1277,7 @@ yyreduce:
 
   case 5:
 #line 39 "parser2.y" /* yacc.c:1646  */
-    {if(strcmp((yyvsp[0].str),"true")==0){setIFlag(1);} else if (strcmp((yyvsp[0].str),"false")==0){setIFlag(0);} else{printf("\nInvalid Perfect Option Specified");}}
+    {if(strcmp((yyvsp[0].str),"true")==0){setIFlag(1);} else if (strcmp((yyvsp[0].str),"false")==0){setIFlag(0);} else{printf("\nInvalid Perfect Option Specified\n");exit(0);}}
 #line 1282 "parser2.tab.c" /* yacc.c:1646  */
     break;
 
@@ -1301,7 +1301,7 @@ yyreduce:
 
   case 9:
 #line 43 "parser2.y" /* yacc.c:1646  */
-    {if((yyvsp[0].intval)==1) {set_cache_param(CACHE_PARAM_WRITETHROUGH, 1);} else{set_cache_param(CACHE_PARAM_WRITEBACK,1);}}
+    {if((yyvsp[0].intval)==1) {set_cache_param(CACHE_PARAM_WRITETHROUGH, 1);} else if((yyvsp[0].intval)==0){set_cache_param(CACHE_PARAM_WRITEBACK,1);} else{printf("Error: Write through value is not correct\n"); exit(0);}}
 #line 1306 "parser2.tab.c" /* yacc.c:1646  */
     break;
 
@@ -1313,7 +1313,7 @@ yyreduce:
 
   case 11:
 #line 45 "parser2.y" /* yacc.c:1646  */
-    {if(strcmp((yyvsp[0].str),"true")==0){setDFlag(1);} else if (strcmp((yyvsp[0].str),"false")==0){setDFlag(0);} else{printf("\nInvalid Perfect Option Specified");}}
+    {if(strcmp((yyvsp[0].str),"true")==0){setDFlag(1);} else if (strcmp((yyvsp[0].str),"false")==0){setDFlag(0);} else{printf("\nInvalid Perfect Option Specified\n");exit(0);}}
 #line 1318 "parser2.tab.c" /* yacc.c:1646  */
     break;
 
@@ -1337,7 +1337,7 @@ yyreduce:
 
   case 15:
 #line 49 "parser2.y" /* yacc.c:1646  */
-    {if((yyvsp[0].intval)==1) {set_cache_param(CACHE_PARAM_DWRITETHROUGH, 1);} else{set_cache_param(CACHE_PARAM_DWRITEBACK,1);}}
+    {if((yyvsp[0].intval)==1) {set_cache_param(CACHE_PARAM_DWRITETHROUGH, 1);} else if((yyvsp[0].intval)==0){set_cache_param(CACHE_PARAM_DWRITEBACK,1);} else{printf("Error: Write through value is not correct\n"); exit(0);}}
 #line 1342 "parser2.tab.c" /* yacc.c:1646  */
     break;
 
