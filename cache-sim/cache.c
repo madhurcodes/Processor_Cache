@@ -404,9 +404,8 @@ void print_stats()
 	if (!cache_stat_inst.accesses)
 		printf("  miss rate: 0 (0)\n");
 	else
-		printf("  miss rate: %2.4f (hit rate %2.4f)\n",
-			   (float)cache_stat_inst.misses / (float)cache_stat_inst.accesses,
-			   1.0 - (float)cache_stat_inst.misses / (float)cache_stat_inst.accesses);
+		printf("  miss rate: %2.4f%% (hit rate %2.4f%%)\n",
+			   100*(float)cache_stat_inst.misses / (float)cache_stat_inst.accesses,100*(1.0 - (float)cache_stat_inst.misses / (float)cache_stat_inst.accesses));
 	printf("  replace:   %d\n", cache_stat_inst.replacements);
 
 	printf(" DATA\n");
@@ -415,9 +414,9 @@ void print_stats()
 	if (!cache_stat_data.accesses)
 		printf("  miss rate: 0 (0)\n");
 	else
-		printf("  miss rate: %2.4f (hit rate %2.4f)\n",
-			   (float)cache_stat_data.misses / (float)cache_stat_data.accesses,
-			   1.0 - (float)cache_stat_data.misses / (float)cache_stat_data.accesses);
+		printf("  miss rate: %2.4f%% (hit rate %2.4f%%)\n",
+			   100*(float)cache_stat_data.misses / (float)cache_stat_data.accesses,
+			   100*(1.0 - (float)cache_stat_data.misses / (float)cache_stat_data.accesses));
 	printf("  replace:   %d\n", cache_stat_data.replacements);
 
 	printf(" TRAFFIC (in words)\n");
