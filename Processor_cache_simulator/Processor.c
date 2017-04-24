@@ -260,6 +260,10 @@ void DoComputations(){
 		mul_hi[i] = 0;
 		p_c[i] = 0;
 	}
+//	Register[29][32] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0};
+	Register[29][28] = 1;
+	Register[29][15] = 1;
+	Register[29][16] = 1;
 
 	int ca_ll = write(ActivatedThreads[0],ActivatedThreads[1],ActivatedThreads[2],ActivatedThreads[3],ActivatedThreads[4]);	
 	
@@ -501,6 +505,9 @@ void DoComputations(){
 	{
 		listOfBreakPoints[i] = 0;
 	}
+	Register[29][28] = 1;
+	Register[29][15] = 1;
+	Register[29][16] = 1;
 	numberofCycles = 0;
 	program_counter = 0;
 	pcFlag = 0;
@@ -1487,7 +1494,7 @@ void executeTheInstruction(){
 		EX_MEM.left.insname = "a";
 		EX_MEM.left.desRegister = 31;
 		int nextstr = program_counter;
-		nextstr = program_counter * 4;
+		nextstr = (program_counter - 1) * 4;
 		nextstr = nextstr + 4194304;
 		for (t = 0; t < 32; t++)
 		{
@@ -1507,7 +1514,7 @@ void executeTheInstruction(){
 		EX_MEM.left.insname = "a";
 		EX_MEM.left.desRegister = desArith;
 		int nextstr = program_counter;
-		nextstr = program_counter * 4;
+		nextstr = (program_counter - 1) * 4;
 		nextstr = nextstr + 4194304;
 		for (t = 0; t < 32; t++)
 		{
