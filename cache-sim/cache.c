@@ -30,6 +30,8 @@ static cache_stat cache_stat_inst;
 static cache_stat cache_stat_data;
 
 /************************************************************/
+
+// Function to Set Cache Parameters, called by main
 void set_cache_param(param, value)
 		int param;
 		int value;
@@ -76,16 +78,17 @@ void set_cache_param(param, value)
 /************************************************************/
 
 /************************************************************/
+// Function to initialize Cache
 void init_cache()
 {
 	int i;
 	/* initialize the cache, and cache statistics data structures */
 	if(cache_split==1){
-		c1.size = cache_isize/4;
+		c1.size = cache_isize/4; // isize is in bytes
 		c1.associativity = cache_assoc;
-		c1.index_mask_offset = LOG2(cache_block_size);
-		c1.n_sets = cache_isize/(cache_assoc*cache_block_size);
-		c1.index_mask = (c1.n_sets-1) << LOG2(cache_block_size);
+		c1.index_mask_offset = LOG2(cache_block_size); // Number of offset bits due to block being bigger than one byte
+		c1.n_sets = cache_isize/(cache_assoc*cache_block_size);// Number of sets
+		c1.index_mask = (c1.n_sets-1) << LOG2(cache_block_size); //index mask is like 000011100
 
 		c1.LRU_head = (Pcache_line *) calloc(1,sizeof(Pcache_line)*c1.n_sets);
 		c1.LRU_tail = (Pcache_line *) calloc(1,sizeof(Pcache_line)*c1.n_sets);
@@ -96,7 +99,8 @@ void init_cache()
 			c1.LRU_tail[i] = NULL;
 			c1.set_contents[i] = 0;
 		}
-
+		// Have to initialize the second cache too if 
+		// cache is split.
 		c2.size = cache_dsize/4;
 		c2.associativity = cache_assoc;
 		c2.index_mask_offset = LOG2(cache_block_size);
@@ -114,7 +118,7 @@ void init_cache()
 		}
 	}
 	else{
-
+		// In case of unified cache only initialize c1
 		c1.size = cache_usize/4;
 		c1.associativity = cache_assoc;
 		c1.index_mask_offset = LOG2(cache_block_size);
@@ -138,16 +142,18 @@ void init_cache()
 /************************************************************/
 
 /************************************************************/
+// Function to perform a cache access
 void perform_access(addr, access_type)
 		unsigned addr, access_type;
 {
 
 	/* handle an access to the cache */
+	
 	cache* to_access;
-
-	if(cache_split==1){
+	// to_access will be a pointer to the needed cache
+	if(cache_split==1){ // Setting the to_access pointer to appropiate value
 		if(access_type == TRACE_INST_LOAD ){
-			to_access = &c1;
+			to_access = &c1; 
 		}
 		else{
 			to_access = &c2;
@@ -158,7 +164,7 @@ void perform_access(addr, access_type)
 	}
 	unsigned int ind = (addr & to_access->index_mask) >> to_access->index_mask_offset;
 	unsigned int tag = addr >> (to_access->index_mask_offset + LOG2(to_access->n_sets));
-
+	// index and tag are derived from cache parameters and address given.
 
 	if(access_type == TRACE_INST_LOAD ){
 		cache_stat_inst.accesses += 1;
@@ -166,9 +172,10 @@ void perform_access(addr, access_type)
 	else{
 		cache_stat_data.accesses += 1;
 	}
+	
 	Pcache_line toInsert;
 	if(to_access->LRU_head[ind]== NULL){
-
+		// In case the indexed set is empty we just insert into it.
 		toInsert = (Pcache_line) calloc(1,sizeof(cache_line));
 		toInsert->tag = tag;
 		toInsert->dirty = FALSE;
@@ -186,6 +193,7 @@ void perform_access(addr, access_type)
 			if(cache_writealloc == TRUE) {
 				cache_stat_data.demand_fetches += cache_block_size/4;
 				if(cache_writeback == TRUE) {
+					// Dirty because data written
 					toInsert->dirty = TRUE;
 				}
 				else {
@@ -201,14 +209,16 @@ void perform_access(addr, access_type)
 
 		if(cache_writealloc == TRUE || access_type != TRACE_DATA_STORE) {
 			to_access->set_contents[ind] = 1;
+			// Final insert ( not done if no write alloc and it's a write instr )
 			insert(&(to_access->LRU_head[ind]),&(to_access->LRU_tail[ind]),toInsert);
 		}
 
 	}
 
-	else{
+	else{ // Not empty Set
 		Pcache_line c_line;
 		int found_flag = 0;
+		// Try to find 
 		for(c_line = to_access->LRU_head[ind]; c_line != to_access->LRU_tail[ind]->LRU_next; c_line = c_line->LRU_next) {
 			if(c_line->tag == tag) {
 				found_flag = 1;
@@ -216,6 +226,7 @@ void perform_access(addr, access_type)
 			}
 		}
 		if(found_flag == 0){
+			// If I did not find the desired address in the set
 			toInsert = (Pcache_line) calloc(1,sizeof(cache_line));
 			toInsert->tag = tag;
 			toInsert->dirty = FALSE;
@@ -247,7 +258,7 @@ void perform_access(addr, access_type)
 					cache_stat_data.copies_back++;
 				}
 			}
-
+			// If empty spacein set then just insert
 			if(to_access->set_contents[ind]<to_access->associativity){
 
 				if(cache_writealloc == TRUE || access_type != TRACE_DATA_STORE) {
@@ -257,7 +268,7 @@ void perform_access(addr, access_type)
 
 			}
 			else{
-
+				// Otherwise replace an element is the set.
 				if(access_type == TRACE_INST_LOAD ){
 					cache_stat_inst.replacements += 1;
 				}
@@ -274,7 +285,7 @@ void perform_access(addr, access_type)
 					else if(to_access->LRU_tail[ind]->dirty == TRUE && access_type == TRACE_INST_LOAD) {
 						cache_stat_inst.copies_back += cache_block_size/4;
 					}
-
+					// Takes care of lru by itself since delete and insert work from specified ends only.
 					delete(&(to_access->LRU_head[ind]),&(to_access->LRU_tail[ind]),to_access->LRU_tail[ind]);
 					insert(&(to_access->LRU_head[ind]),&(to_access->LRU_tail[ind]),toInsert);
 					to_access->set_contents[ind] += 1;
@@ -282,12 +293,14 @@ void perform_access(addr, access_type)
 			}
 		}
 
-		else{ // Cache Hit
+		else{ // Cache Hit 
+			// only need to write if it's a store access.
 			Pcache_line current_line = c_line;
 			delete(&(to_access->LRU_head[ind]),&(to_access->LRU_tail[ind]),c_line);
 			insert(&(to_access->LRU_head[ind]),&(to_access->LRU_tail[ind]),current_line);
 			if(access_type == TRACE_DATA_STORE){
 				if(cache_writeback == TRUE){
+					// If writeback and store instruction.
 					current_line->dirty = 1;
 				}
 				else{
@@ -302,17 +315,18 @@ void perform_access(addr, access_type)
 /************************************************************/
 
 /************************************************************/
+// To flush the cache after all accesses have been completed.
 void flush()
 {
 	/* flush the cache */
 	int i;
-	//dump_cache();
 	for(i = 0; i < c1.n_sets; i++) {
 		Pcache_line c_line;
 		if(c1.LRU_head[i] != NULL) {
 			for(c_line = c1.LRU_head[i]; c_line != c1.LRU_tail[i]->LRU_next; c_line = c_line->LRU_next) {
 				if(c_line != NULL && c_line->dirty == TRUE) {
 					cache_stat_inst.copies_back += cache_block_size/4;
+					// If dirty then write back to mem
 				}
 			}
 		}
@@ -324,6 +338,7 @@ void flush()
 			for(c_line = c2.LRU_head[i]; c_line != c2.LRU_tail[i]->LRU_next; c_line = c_line->LRU_next) {
 				if(c_line != NULL && c_line->dirty == TRUE) {
 					cache_stat_data.copies_back += cache_block_size/4;
+					// If dirty then write back to mem
 				}
 			}
 		}
@@ -334,6 +349,8 @@ void flush()
 /************************************************************/
 
 /************************************************************/
+// Helper funcions
+//Deletes an element from the list
 void delete(head, tail, item)
 		Pcache_line *head, *tail;
 		Pcache_line item;
@@ -373,6 +390,7 @@ void insert(head, tail, item)
 /************************************************************/
 
 /************************************************************/
+//To print configured cache parameters.
 void dump_settings()
 {
 	printf("*** CACHE SETTINGS ***\n");
@@ -394,6 +412,7 @@ void dump_settings()
 /************************************************************/
 
 /************************************************************/
+// To print cache statistics
 void print_stats()
 {
 	printf("\n*** CACHE STATISTICS ***\n");
@@ -426,10 +445,11 @@ void print_stats()
 									cache_stat_data.copies_back);
 }
 /************************************************************/
+// To dump cache contents (for debugging)
 void dump_cache() {
 	int i;
 	Pcache_line line;
-	for(i = 0; i < c1.n_sets; i++) {
+	for(i = 0; i < c1.n_sets; i++) { //Iterate over all sets
 		for(line = c1.LRU_head[i]; line != c1.LRU_tail[i]; line = line->LRU_next) {
 			printf("%d ", line->tag);
 		}
