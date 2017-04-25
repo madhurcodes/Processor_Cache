@@ -3,47 +3,46 @@
 #include <pthread.h>
 #include <string.h>
 #include <math.h>
-
 #include "cache.h"
 #include "main.h"
 
-FILE* fpout, *fpout2;
-int InstructionsExecuted = 0;
-instruction* instHead = NULL;
-long program_counter = 0,numberOfInstructions=0; 
-int ActivatedThreads[5];
-int Register[32][32];
+FILE* fpout, *fpout2;         //fpout to write the svg file and fpout2 to write the results file
+int InstructionsExecuted = 0; //Variable to keep track of instructions executed
+instruction* instHead = NULL; //headnode of the instruction list
+long program_counter = 0,numberOfInstructions=0; //pointer to the instruction executing 
+int ActivatedThreads[5];     //array to keep track of activated threads
+int Register[32][32]; //Register File
 int Memory[65536][8]; // Assuming words are stored in the big endian manner i.e. most significant bytes are stored first followed by least significant bytes
-int InstructionMemory[16384][32];
-long MULSPECIAL;
-char* filename;
-int pcFlag=0;
-int contFlag = 0;
-char *print1 = "",*print2 = "",*print3 = "",*print4 = "",*print5 = "";
-int flush=0;
-DecodedInstruction emptyStruct;
+int InstructionMemory[16384][32]; //instruction memory where all the instruction are stored
+long MULSPECIAL;         // variable to hold the result of multiplication
+char* filename;          //filename of the svg file
+int pcFlag=0; 		//flag to check whether to increase program counter or not
+int contFlag = 0;  //function for continuing the instruction at the breakpoint
+char *print1 = "",*print2 = "",*print3 = "",*print4 = "",*print5 = ""; //variable to print the name of instructions on the svg
+int flush=0;   //variable to keep track of the number of instructions to be flushed
+DecodedInstruction emptyStruct; //follwing four registers help in flushing the instructions
 IF_ID_Data emptyStruct1;
 EX_MEM_DATA emptyStruct3;
 Mem_WB_Data emptyStruct4;
-int listOfBreakPoints[16364];
+int listOfBreakPoints[16364]; // this array maintains the list of breakpoints inserted
 int breakpoint;
-IF_ID_T IF_ID;
+IF_ID_T IF_ID; //Registers between the different stages of pipelining
 ID_EX_T ID_EX;
 EX_MEM_T EX_MEM;
 MEM_WB_T MEM_WB;
 CheckSWithF dataHazardCheckingUnit;
 CheckSWithF emptyStruct5;
-DataForwardingUnit PATH1;
-DataForwardingUnit PATH2;
+DataForwardingUnit PATH1; //data forwarding unit for path1
+DataForwardingUnit PATH2; //data forwarding unit for path2
 int numberofInst=0;
-int fileWrite=0;
-int numberofCycles;
-int numOfCaches = 0;
-int mul_hi[32];
-int mul_lo[32];
-int p_c[32];
-int perIFlag = 0;
-int perDFlag = 0;
+int fileWrite=0;       //flag to tell whether to wtite in file
+int numberofCycles;   //variable to keep track of number of cycles
+int numOfCaches = 0;  //variable to keep track of number of cache accesses
+int mul_hi[32];      //MUl hi register
+int mul_lo[32];     //Mul lo register
+int p_c[32];        // program counter register
+int perIFlag = 0;   //flag to tell the parameter of cache
+int perDFlag = 0;   //flag to tell the parameter of Dcache
 DataForwardingUnit emptyStruct6;
 int path2flag=0;
 int write(int is_g1,int is_g2, int is_g3, int is_g4, int is_g5);
@@ -57,7 +56,7 @@ void setIFlag(int fl){
 void setDFlag(int fl){
 	perDFlag = fl;
 }
- 
+//Function to add the instruction in the link list while reading from file 
 void addNode(char* s){
 	numberOfInstructions++;
 	instruction* temp;
@@ -77,6 +76,7 @@ void addNode(char* s){
 	return;
 }
 
+//function to get the implemented memory index given index in hexadecimal
 long getMemoryIndex(int Z[8]){
 	long x = 0;
 	int i=0;
@@ -88,6 +88,7 @@ long getMemoryIndex(int Z[8]){
 	return x; 
 }
 
+//function to get the implemented memory index given index in binary
 long getMemoryIndex32(int Z[32]){
 	long x = 0;
 	int i=0;
@@ -99,7 +100,7 @@ long getMemoryIndex32(int Z[32]){
 	return x; 
 }
 
-
+//function to get the hexadecimal representation of a decimal value
 char getHexValue(int m){
 	char ch;
 	if (m==0)
@@ -167,7 +168,7 @@ char getHexValue(int m){
 	}
 }
 
-
+//function to print the values present in register
 void printValueinRegister(int d){
 	int z=0;
 	int sum=0;
@@ -181,7 +182,11 @@ void printValueinRegister(int d){
 	}
 	return;
 }
+
+
+//Main Function called by the parser to do all the computations
 void DoComputations(){
+	//initialixation of all the variables
 	int i=0,j=0;
 	contFlag = 0;
 	MULSPECIAL = 0;
@@ -260,18 +265,19 @@ void DoComputations(){
 		mul_hi[i] = 0;
 		p_c[i] = 0;
 	}
-//	Register[29][32] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0};
+    //Initializing the stack pointer
 	Register[29][28] = 1;
 	Register[29][15] = 1;
 	Register[29][16] = 1;
 
+	//function call to print the initial svg
 	int ca_ll = write(ActivatedThreads[0],ActivatedThreads[1],ActivatedThreads[2],ActivatedThreads[3],ActivatedThreads[4]);	
 	
 	fclose(fpout);
-
+	//function call to store the instructions in the memory
 	writeInstructionMemory();
 
-	char inp[100] = "", *mem_add;
+	char inp[100] = "", mem_add[100];
 	int mem_no, iter_var, memi;
 	long insmemindex;
 	int MAD[8], ma, am;
@@ -393,8 +399,8 @@ void DoComputations(){
 			}
 		}
 		else if(strcmp("break",inp)==0){
-			insmemindex = 0;
 			scanf("%s",mem_add);
+			insmemindex = 0;
 			for (ma = 0; ma < 8; ma++)
 			{
 				MAD[ma] = (int)(*(mem_add + 2 + ma) - '0');
@@ -407,8 +413,15 @@ void DoComputations(){
 			if (insmemindex>=0 && insmemindex%4==0)
 			{
 				insmemindex = insmemindex/4;
-				listOfBreakPoints[insmemindex] = 1;
-				printf("Breakpoint inserted successfully\n");
+				if (insmemindex>=0 && insmemindex<16384)
+				{
+					listOfBreakPoints[insmemindex] = 1;
+					printf("Breakpoint inserted successfully\n");
+				}
+				else{
+					printf("Error: Break point cannot be inserted here\n");
+				}
+				
 			}
 			else{
 				printf("Error: no instruction here\n");
@@ -440,8 +453,15 @@ void DoComputations(){
 			if (insmemindex>=0 && insmemindex%4==0)
 			{
 				insmemindex = insmemindex/4;
-				listOfBreakPoints[insmemindex] = 0;
-				printf("Breakpoint deleted successfully\n");
+				if (insmemindex>=0 && insmemindex<16384)
+				{
+					listOfBreakPoints[insmemindex] = 0;
+					printf("Breakpoint deleted successfully\n");
+				}
+				else{
+					printf("Error: NO break point here\n");
+				}
+				
 			}
 			else{
 				printf("Error: no breakpoint here\n");
@@ -558,6 +578,7 @@ void DoComputations(){
 	return;
 }
 
+//function to convert the hexadecimal value to binary
 char* singleCharConvert(char ch){
 	char *s;
 	switch(ch){
@@ -634,6 +655,7 @@ char* singleCharConvert(char ch){
 	return s;
 }
 
+//given a 32 bit vector, this function return the decimal value of bits between specified lower and higher bits
 int covertToInteger(int X[32],int l, int r){
 	int y =0;
 	int j=0;
@@ -647,6 +669,7 @@ int covertToInteger(int X[32],int l, int r){
 }
 
 
+//function to decode the instruction
 void decodeTheInstruction(int instBin[32]){
 
 	int k=0,fn,rd_temp,rs_temp,rt_temp,shamt_temp,offset_temp;
@@ -876,6 +899,8 @@ void decodeTheInstruction(int instBin[32]){
 	return;
 }
 
+
+//function to convert the binary number to signed decimal
 int binaryToInteger(int D[32]){
 	int f;
 	int sum = 0;
@@ -890,6 +915,7 @@ int binaryToInteger(int D[32]){
 }
 
 
+//function to get the and value of two bits
 int and(int a, int b){
 	if (a==1 && b==1)
 	{
@@ -900,6 +926,8 @@ int and(int a, int b){
 	}
 }
 
+
+//function to get the or value of two bits
 int or(int a, int b){
 	if (a==0 && b==0)
 	{
@@ -910,6 +938,8 @@ int or(int a, int b){
 	}
 }
 
+
+//function to get the nor value of two bits
 int nor(int a, int b){
 	if (a==0 && b==0)
 	{
@@ -920,6 +950,8 @@ int nor(int a, int b){
 	}
 }
 
+
+//function to flush the instructions in case of branch and jump instructions
 void flushTheInstructions(int i){
 	if (i==0)
 	{
@@ -936,6 +968,8 @@ void flushTheInstructions(int i){
 	return;
 }
 
+
+//function to change the program counter by the offset in case of branch instruction
 void advanceProgramCounter(int R){
 
 	program_counter = program_counter + R;
@@ -960,6 +994,7 @@ void advanceProgramCounter(int R){
 	return;
 }
 
+//function to change the program counter by the offset in case of jump instructions
 void advanceJumpProgramCounter(int tar){
 		long tem = program_counter-2;
 		program_counter = program_counter - 2;
@@ -977,6 +1012,7 @@ void advanceJumpProgramCounter(int tar){
 		else if (R==2)
 		{
 			pcFlag = 1;
+			program_counter = program_counter + 1;
 			flushTheInstructions(1);
 		}
 		else
@@ -986,6 +1022,8 @@ void advanceJumpProgramCounter(int tar){
 		}
 }
 
+
+//function to check the datadependence of path2 and path1
 int checkDataDependence(){
 
 	if ((ID_EX.right.rt==PATH1.rd || ID_EX.right.rs==PATH1.rd)  && (!((ID_EX.right.rt>31 || ID_EX.right.rs>31))))
@@ -998,6 +1036,15 @@ int checkDataDependence(){
 	}
 	return 0;
 }
+
+
+
+/******************/
+/*		ALU       */
+/*      UNIT      */
+/******************/
+
+//function to execute the instruction i.e. ALU operations
 void executeTheInstruction(){
 	char *nameTemp = ID_EX.right.name;
 	int var1[32],var2[32],result[32],t,temp1,temp2,temp3,shiftAmountShamt,shiftAmount,offSet,desArith,desLoad,offsetArr[32];
@@ -1486,7 +1533,25 @@ void executeTheInstruction(){
 		{
 			tarad = tarad + var1[t]*pow(2,t);
 		}
-		advanceJumpProgramCounter(tarad);
+		long tem = program_counter-2;
+		program_counter = (tarad- 4194304)/4;
+		int R = program_counter - tem;
+		if (R==1)
+		{
+			flushTheInstructions(0);
+			pcFlag = 0;
+		}
+		else if (R==2)
+		{
+			pcFlag = 1;
+			program_counter = program_counter + 1;
+			flushTheInstructions(1);
+		}
+		else
+		{
+			pcFlag = 1;
+			flushTheInstructions(2);
+		}
 		PATH1.rd = 50;
 	}
 	else if (strcmp(nameTemp,"jal")==0)
@@ -1531,7 +1596,25 @@ void executeTheInstruction(){
 		{
 			tarad = tarad + var1[t]*pow(2,t);
 		}
-		advanceJumpProgramCounter(tarad);
+		long tem2 = program_counter-2;
+		program_counter = (tarad- 4194304)/4;
+		int R2 = program_counter - tem2;
+		if (R2==1)
+		{
+			flushTheInstructions(0);
+			pcFlag = 0;
+		}
+		else if (R2==2)
+		{
+			pcFlag = 1;
+			program_counter = program_counter + 1;
+			flushTheInstructions(1);
+		}
+		else
+		{
+			pcFlag = 1;
+			flushTheInstructions(2);
+		}
 		PATH1.rd = desArith;
 	}
 	else if (strcmp(nameTemp,"lb")==0)
@@ -1707,6 +1790,8 @@ void executeTheInstruction(){
 	return;
 }
 
+
+//function to check whether the NOP instruction will be inserted or not
 int checkStallingWithForwarding(){
 	//if needed then 1 else return 0
 	if (strcmp(IF_ID.left.identifier,"notread")==0)
@@ -1768,6 +1853,7 @@ void registerRead(){
 	return;
 }
 
+//function to fetch the instruction
 void *instructionFetch(void *value){
 	//Code to be added
 	int j=0;
@@ -1776,7 +1862,7 @@ void *instructionFetch(void *value){
 
 	if (program_counter<numberOfInstructions)
 	{
-		if (listOfBreakPoints[program_counter]==1 && contFlag==0)
+		if (program_counter>=0 && program_counter<16384 && listOfBreakPoints[program_counter]==1 && contFlag==0)
 		{
 			breakpoint = program_counter;
 			print1 = "";
@@ -1825,6 +1911,8 @@ void *instructionFetch(void *value){
 	pthread_exit(NULL);
 }
 
+
+//function called by the decode thread to decode the instruction
 void *instructionDecode(void *value){
 	//Code to be added
 
@@ -1852,6 +1940,8 @@ void *instructionDecode(void *value){
 	pthread_exit(NULL);
 }
 
+
+//Function called by the ALU thread to execute the instruction
 void *Execute(void *value){
 	//Code to be added
 
@@ -1875,7 +1965,8 @@ void *Execute(void *value){
 	}
 	pthread_exit(NULL);
 }
- 
+
+//function called by the write mem thread to write in the memory
 void *writeMemory(void *value){
 	char *nm = EX_MEM.right.insname;
 	int t=0;
@@ -2057,6 +2148,8 @@ void *writeMemory(void *value){
 	pthread_exit(NULL);
 }
 
+
+//Function called by the write back stage of pipelining
 void *writeRegister(void *value){
 	//Code to be added
 	int dataToBeWritten[32];
@@ -2102,13 +2195,12 @@ void *writeRegister(void *value){
 	pthread_exit(NULL);
 }
 
-
+//Function called on typing step at the terminal. This function launched all the threads
 void step(){
 	int i;
 	pthread_t threads[5];
 	pthread_create(&threads[0],NULL,instructionFetch,NULL);
     pthread_create(&threads[1],NULL,instructionDecode,NULL);
-    //pthread_create(&threads[2],NULL,Execute,NULL);
     pthread_create(&threads[2],NULL,writeMemory,NULL);
 	pthread_create(&threads[3],NULL,writeRegister,NULL);
 	
@@ -2134,10 +2226,6 @@ void step(){
 	if ((IF_ID.left.name!=NULL)&&(strcmp(IF_ID.left.instr,"NOP")==0))
 	{
 		pcFlag=0;
-		// PATH2.name = dataHazardCheckingUnit.name;
-		// PATH2.rs = dataHazardCheckingUnit.rs;
-		// PATH2.rt = dataHazardCheckingUnit.rt;
-		// PATH2.rd = dataHazardCheckingUnit.rd;
 	}
 	else{
 		if (pcFlag==1)
@@ -2180,6 +2268,8 @@ void step(){
 	return;
 }
 
+
+//function called at the starting to write in the instruction memory
 void writeInstructionMemory(){
 	instruction* temporary = instHead;
 	int instBin[32];

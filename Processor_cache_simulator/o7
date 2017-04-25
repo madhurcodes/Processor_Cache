@@ -1,0 +1,18 @@
+Instructions,100
+Cycles,126
+IPC,0.7937
+Time (ns),873.0000
+Idle time (ns),823.0000
+Idle time (%),94.2726%
+Cache Summary
+Cache L1-I
+num cache accesses,124
+num cache misses,8
+miss rate,6.4516%
+Cache L1-D
+num cache accesses,35
+num cache misses,10
+miss rate,28.5714%
+DRAM Summary
+num cache accesses,159
+average dram access latency (ns),6
