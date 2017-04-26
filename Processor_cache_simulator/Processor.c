@@ -1245,7 +1245,6 @@ void executeTheInstruction(){
 		temp1 = binaryToInteger(var1);
 		temp2 = binaryToInteger(var2);
 		MULSPECIAL = temp1*temp2;
-		printf("%d   %d   %ld\n",temp1,temp2,MULSPECIAL);
 		int negflag = 0;
 		if (MULSPECIAL<0)
 		{
