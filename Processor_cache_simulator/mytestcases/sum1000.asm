@@ -2,8 +2,8 @@
 # also doubles it at the end.
 
 	
-	li $8, 1000
-	li $9, 1
+	addi $8, $0, 1000
+	addi $9, $0, 1
 	lui $10, 0x1001
 Lab1:
 	sw $9, 0($10)
@@ -13,8 +13,8 @@ Lab1:
 	beq  $8, 0 , here
 	b Lab1
 	here:
-	li $8, 1000
-	li $11, 0
+	addi $8, $0, 1000
+	addi $11, $0, 0
 	lui $10, 0x1001
 Lab2:
 	lw $9, 0($10)
