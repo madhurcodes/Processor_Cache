@@ -1,5 +1,4 @@
-# computes fibonacci series (10 terms (can be changed) ) and stores in memory, at end 
-# multiplies last two generated numbers and stores to t1
+# computes fibonacci series (10 terms (can change) ) and stores in memory, at end multiplies last two generated numbers and stores to t1
 lui $8, 0x1001
 addi $4, $0, 1	
 sw $4, 0($8)
