@@ -924,12 +924,12 @@ void decodeTheInstruction(int instBin[32]){
 int binaryToInteger(int D[32]){
 	int f;
 	int sum = 0;
-	for (f = 0; f < 32; f++)
+	for (f = 0; f < 31; f++)
 	{
 		sum = sum + D[f]*pow(2,f);
 	}
 
-	sum = sum - D[32]*pow(2,31);
+	sum = sum - D[31]*pow(2,31);
 
 	return sum;
 }
