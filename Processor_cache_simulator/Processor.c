@@ -293,6 +293,12 @@ void DoComputations(){
 				printf("All the cycles are completed\n");
 			}			
 		}
+else if (strcmp("check",inp)==0){
+while(program_counter<(numberOfInstructions+4)){
+		step();
+	}
+}		
+
 		else if (strcmp("regdump",inp)==0){
 			for(iter_var=0;iter_var<32;iter_var++){
 				printf("$%2d: 0x",iter_var);
@@ -482,6 +488,7 @@ void DoComputations(){
 		}
 		fflush(stdin);
 	}
+
 	flush2();
 
 	init_cache();
@@ -710,6 +717,11 @@ void decodeTheInstruction(int instBin[32]){
 			IF_ID.left.identifier = "std";
 			IF_ID.left.name = "sltu";
 		}
+		else if (fn==42 && shamt_temp==0)
+		{
+			IF_ID.left.identifier = "std";
+			IF_ID.left.name = "slt";
+		}
 		else if (fn==32 && shamt_temp==0)
 		{
 			IF_ID.left.name = "add";
@@ -785,6 +797,14 @@ void decodeTheInstruction(int instBin[32]){
 		IF_ID.left.rt = rt_temp;
 		IF_ID.left.label = offset_temp;
 		IF_ID.left.identifier = "beq";
+	}
+	else if (k==5)
+	{
+		IF_ID.left.name = "bne";
+		IF_ID.left.rs = rs_temp;
+		IF_ID.left.rt = rt_temp;
+		IF_ID.left.label = offset_temp;
+		IF_ID.left.identifier = "bne";
 	}
 	else if (k==1){
 		if (rt_temp==1)
@@ -1225,6 +1245,7 @@ void executeTheInstruction(){
 		temp1 = binaryToInteger(var1);
 		temp2 = binaryToInteger(var2);
 		MULSPECIAL = temp1*temp2;
+		printf("%d   %d   %ld\n",temp1,temp2,MULSPECIAL);
 		int negflag = 0;
 		if (MULSPECIAL<0)
 		{
@@ -1474,6 +1495,17 @@ void executeTheInstruction(){
 		temp1 = binaryToInteger(var1);
 		temp2 = binaryToInteger(var2);
 		if (temp1==temp2)
+		{
+			advanceProgramCounter(offSet);
+		}
+		PATH1.rd = 50;
+	}
+	else if (strcmp(nameTemp,"bne")==0)
+	{
+		EX_MEM.left.insname = "b";
+		temp1 = binaryToInteger(var1);
+		temp2 = binaryToInteger(var2);
+		if (temp1!=temp2)
 		{
 			advanceProgramCounter(offSet);
 		}
@@ -1763,6 +1795,34 @@ void executeTheInstruction(){
 		}
 		PATH1.rd = desArith;
 	}
+	else if (strcmp(nameTemp,"slt")==0){
+		EX_MEM.left.insname = "a";
+		EX_MEM.left.desRegister = desArith;
+		temp1 = 0;
+		for (t = 0; t < 31; t++)
+		{
+			temp1 = temp1 + var1[t]*pow(2,t);
+		}
+		temp2 = 0;
+		for (t = 0; t < 31; t++)
+		{
+			temp2 = temp2 + var2[t]*pow(2,t);
+			result[t] = 0;
+		}
+		result[31] = 0;
+		temp1 = temp1 - var1[31]*pow(2,31);
+		temp2 = temp2 - var2[31]*pow(2,31);
+		if (temp1 < temp2)
+		{
+			result[0] = 1;
+		}
+		for (t = 0; t < 32; t++)
+		{
+			EX_MEM.left.Data[t] = result[t];
+			PATH1.value[t] = result[t];
+		}
+		PATH1.rd = desArith;
+	}
 	else if (strcmp(nameTemp,"slti")==0){
 		EX_MEM.left.insname = "a";
 		EX_MEM.left.desRegister = desLoad;
@@ -1810,7 +1870,7 @@ int checkStallingWithForwarding(){
 	{
 		return 1;
 	}
-	else if (((strcmp(dataHazardCheckingUnit.name,"lw")==0)||(strcmp(dataHazardCheckingUnit.name,"lb")==0)) && (dataHazardCheckingUnit.rt==IF_ID.left.rs || dataHazardCheckingUnit.rt==IF_ID.left.rt)&&(strcmp(IF_ID.left.identifier,"beq")==0))
+	else if (((strcmp(dataHazardCheckingUnit.name,"lw")==0)||(strcmp(dataHazardCheckingUnit.name,"lb")==0)) && (dataHazardCheckingUnit.rt==IF_ID.left.rs || dataHazardCheckingUnit.rt==IF_ID.left.rt)&&((strcmp(IF_ID.left.identifier,"beq")==0)||(strcmp(IF_ID.left.identifier,"bne")==0)))
 	{
 		return 1;
 	}
